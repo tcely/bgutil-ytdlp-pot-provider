@@ -59,7 +59,7 @@ class BgUtilScriptPTP(BgUtilPTPBase):
     def _node_path(self):
         node_path = shutil.which('node')
         if node_path is None:
-            self.logger.trace('node is not in PATH')
+            return None
         vsn = self._check_node_version(node_path)
         if vsn:
             self.logger.trace(f'Node version: {vsn}')
@@ -76,6 +76,7 @@ class BgUtilScriptPTP(BgUtilPTPBase):
             return False
         node_path = self._node_path
         if not node_path:
+            self.logger.error('Node.js executable not found. Please ensure Node.js is installed and available in PATH.')
             return False
         stdout, stderr, returncode = Popen.run(
             [self._node_path, script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
