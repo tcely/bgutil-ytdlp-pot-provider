@@ -9,7 +9,7 @@ import {
     getHeaders,
     USER_AGENT,
 } from "bgutils-js";
-import { Agent } from "https";
+import { Agent } from "node:https";
 import { ProxyAgent } from "proxy-agent";
 import { JSDOM } from "jsdom";
 import { Innertube, Context as InnertubeContext } from "youtubei.js";
