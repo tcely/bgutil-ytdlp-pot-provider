@@ -202,7 +202,7 @@ jobs:
             ret=$?
           } || true
 
-          echo "::group::Logs from HTTP server container"
+          echo "::group::Logs from HTTP server"
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
             [ -n "$PIDENO" ] && kill -9 "$PIDENO"
             cat server.log
