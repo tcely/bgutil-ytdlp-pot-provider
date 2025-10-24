@@ -13,7 +13,7 @@ import { Agent } from "node:https";
 import { ProxyAgent } from "proxy-agent";
 import { JSDOM } from "jsdom";
 import { Innertube, Context as InnertubeContext } from "youtubei.js";
-import { strerror } from "./utils.js";
+import { strerror } from "./utils";
 
 interface YoutubeSessionData {
     poToken: string;
