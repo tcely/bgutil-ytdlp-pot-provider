@@ -1,5 +1,5 @@
-import { SessionManager } from "./session_manager";
-import { strerror, VERSION } from "./utils";
+import { SessionManager } from "./session_manager.js";
+import { strerror, VERSION } from "./utils.js";
 import { Command } from "commander";
 import express from "express";
 
