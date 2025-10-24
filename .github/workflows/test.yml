@@ -111,6 +111,7 @@ jobs:
     strategy:
       matrix:
         jsrt: [deno,node]
+      fail-fast: false
     env:
       PORT: 4426
       # Interval/Timeout in seconds to wait for the server to be up
@@ -158,6 +159,7 @@ jobs:
           export -f ping
 
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
+            (cd server && npm ci)
             deno run --allow-env --allow-ffi --allow-net server/src/main.ts --port "${{ env.PORT }}" &
             PIDENO=$!
           else
