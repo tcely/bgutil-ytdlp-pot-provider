@@ -1,0 +1,18 @@
+FROM node AS bld
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+FROM denoland/deno
+WORKDIR /app
+USER deno
+
+COPY --from=bld /app/node_modules /app/node_modules
+COPY package.json package-lock.json ./
+COPY tsconfig.json ./
+COPY src/ src/
+RUN deno cache src/main.ts
+
+# deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
+ENTRYPOINT ["deno", "run", "--allow-env", "--allow-ffi", "--allow-net", "--allow-read=/app", "--unstable-sloppy-imports", "src/main.ts"]
