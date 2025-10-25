@@ -140,7 +140,6 @@ jobs:
           cp -r plugin/ ~/yt-dlp-plugins/
       - name: Build Docker image
         uses: docker/build-push-action@v6
-        # if: matrix.jsrt == 'node'
         with:
           context: server/
           file: server/Dockerfile.${{ matrix.jsrt }}
@@ -204,7 +203,8 @@ jobs:
 
 
           docker stop bgutil-provider
-          echo "::group::Logs from HTTP server"
+
+          echo "::group::Logs from HTTP server container"
           # if [ "${{ matrix.jsrt }}" = "deno" ]; then
           #   [ -n "$PIDENO" ] && kill -9 "$PIDENO"
           #   cat server.log
