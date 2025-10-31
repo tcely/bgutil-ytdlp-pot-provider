@@ -10,24 +10,24 @@
 
 [Frequently Asked Questions](https://github.com/Brainicism/bgutil-ytdlp-pot-provider?tab=readme-ov-file#faq)
 
-A proof-of-origin token (POT) provider yt-dlp. We use [LuanRT's Botguard interfacing library](https://github.com/LuanRT/BgUtils) to generate the token.
-This is used to bypass the 'Sign in to confirm you're not a bot' message when invoking yt-dlp from an IP address flagged by YouTube. See _[PO Token Guide](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide)_ for more details.
+A proof-of-origin token (POT) provider for yt-dlp. We use [LuanRT's Botguard interfacing library](https://github.com/LuanRT/BgUtils) to generate the token.
+This project was used to bypass the 'Sign in to confirm you're not a bot' message when invoking yt-dlp from an IP address flagged by YouTube. See _[PO Token Guide](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide)_ for more details.
 
 The provider comes in two parts:
 
 1. **Provider**: Two options -
-   - (a) An HTTP server that generates the POT, and has interfaces for the plugin to retrieve data from (easy setup + docker image provided)
+   - (a) An HTTP server that generates the POT, and has interfaces for the plugin to retrieve data from (much faster, easy setup + docker image provided with Deno/Node.js support)
    - (b) A POT generation script, and has command line options for the plugin to invoke (needs to transpile the script)
-2. **Provider plugin**: uses POT plugin framework to retrieve data from the provider, allowing yt-dlp to simulate having passed the 'bot check'.
+2. **Provider plugin**: retrieves tokens from the provider and provides the token for yt-dlp using _[PO Token Provider Framework](https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/youtube/pot/README.md)_.
 
 ## Installation
 
 ### Base Requirements
 
-1. Requires yt-dlp `2025.05.22` or above.
+1. yt-dlp `2025.05.22` or above.
 
 2. If using Docker image for option (a) for the provider, the Docker runtime is required.  
-   Otherwise, Node.js (>= 18) is required. You will also need git to clone the repository.
+   Otherwise, Node.js (>= 18.18.2) is required. You will also need git to clone the repository.
 
 ### 1. Set up the provider
 
@@ -35,9 +35,11 @@ There are two options for the provider, an always running POT generation HTTP se
 
 #### (a) HTTP Server Option
 
-The provider is a Node.js HTTP server. You have two options for running it: as a prebuilt docker image, or manually as a node application.
+The provider is a Node.js HTTP server. You have two options for running it: as a prebuilt docker image, or manually as a Node.js application.
 
 **Docker:**
+
+<!--TODO: deno-->
 
 ```shell
 docker run --name bgutil-provider -d -p 4416:4416 --init brainicism/bgutil-ytdlp-pot-provider
@@ -52,7 +54,7 @@ docker run --name bgutil-provider -d -p 4416:4416 --init brainicism/bgutil-ytdlp
 # Replace 1.2.2 with the latest version or the one that matches the plugin
 git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
 cd bgutil-ytdlp-pot-provider/server/
-npm install
+npm ci
 npx tsc
 node build/main.js
 ```
@@ -76,7 +78,7 @@ cd ~
 # Replace 1.2.2 with the latest version or the one that matches the plugin
 git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
 cd bgutil-ytdlp-pot-provider/server/
-npm install
+npm ci
 npx tsc
 ```
 
@@ -94,8 +96,8 @@ python3 -m pip install -U bgutil-ytdlp-pot-provider
 
 #### Manual:
 
-1. Download the latest release zip from [releases](https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases).
-2. Install it by placing the zip into one of the [plugin folders](https://github.com/yt-dlp/yt-dlp#installing-plugins).
+1. Download the latest release zip from [the latest release](https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/latest).
+2. Install it by placing the zip into one of the yt-dlp [plugin folders](https://github.com/yt-dlp/yt-dlp#installing-plugins).
 
 ## Usage
 
@@ -150,7 +152,7 @@ To check if the plugin was installed correctly, you should see the `bgutil` prov
 
 ### FAQ
 
-#### I'm getting errors during `npm install` on Termux
+#### I'm getting errors during `npm ci` on Termux
 
 For provider versions >=1.2.0, you may have issues while installing the `canvas` dependency on Termux. The Termux environment is missing a `android_ndk_path` and two packages by default. Run the following commands to setup the dependencies correctly.
 
