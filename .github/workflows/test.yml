@@ -111,6 +111,7 @@ jobs:
     strategy:
       matrix:
         jsrt: [deno,node]
+        run: [native,docker]
       fail-fast: false
     env:
       PORT: 4426
@@ -122,16 +123,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x" # keep in sync with yt-dlp's python requirement
-      # - name: Install Deno
-      #   uses: denoland/setup-deno@v2
-      #   if: matrix.jsrt == 'deno'
-      #   with:
-      #     deno-version: "2.0.0"  # minimum supported version
-      # - name: Install Node
-      #   uses: actions/setup-node@v6
-      #   if: matrix.jsrt == 'node'
-      #   with:
-      #     node-version: "18.0"  # minimum supported version
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        if: matrix.run == 'native' && matrix.jsrt == 'deno'
+        with:
+          deno-version: "2.0.0"  # minimum supported version
+      - name: Install Node
+        uses: actions/setup-node@v6
+        if: matrix.run == 'native' && matrix.jsrt == 'node'
+        with:
+          node-version: "18.0"  # minimum supported version, 18.14
       - name: Download yt-dlp
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
       - name: Install plugin
@@ -157,13 +158,17 @@ jobs:
           }
           export -f ping
 
-          # if [ "${{ matrix.jsrt }}" = "deno" ]; then
-          #   (cd server && npm ci)
-          #   deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
-          #   PIDENO=$!
-          # else
-          docker run --name bgutil-provider -d -p ${{ env.PORT }}:4416 brainicism/bgutil-ytdlp-pot-provider:ci
-          # fi
+          if [ "${{ matrix.run }}" = "native" ]; then
+            (cd server && npm ci)
+            if [ "${{ matrix.jsrt }}" = "deno" ]; then
+              deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
+            else
+              node server/build/main.js --port "${{ env.PORT }}" > server.log 2>&1 &
+            fi
+            PIDENO=$!
+          else
+            docker run --name bgutil-provider -d -p ${{ env.PORT }}:4416 brainicism/bgutil-ytdlp-pot-provider:ci
+          fi
 
           echo "Waiting for server to be up..."
           PING_RESP=$(timeout ${{ env.TIMEOUT }} bash -c "ping ${{ env.INTERVAL }}") || \
@@ -201,17 +206,15 @@ jobs:
             ret=$?
           } || true
 
-
-          docker stop bgutil-provider
-
-          echo "::group::Logs from HTTP server container"
-          # if [ "${{ matrix.jsrt }}" = "deno" ]; then
-          #   [ -n "$PIDENO" ] && kill -9 "$PIDENO"
-          #   cat server.log
-          # else
-            # docker stop bgutil-provider
-          docker logs bgutil-provider
-          # fi
+          if [ "${{ matrix.run }}" = "native" ]; then
+            [ -n "$PIDENO" ] && kill -9 "$PIDENO"
+            echo "::group::Logs from ${{ matrix.run }} HTTP server"
+            cat server.log
+          else
+            docker stop bgutil-provider
+            echo "::group::Logs from ${{ matrix.run }} HTTP server"
+            docker logs bgutil-provider
+          fi
           echo "::endgroup::"
 
           echo "::group::Logs from yt-dlp"
