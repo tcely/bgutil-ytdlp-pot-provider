@@ -110,8 +110,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        jsrt: [deno,node]
-        run: [native,docker]
+        jsrt: [deno, node]
+        run: [native, docker]
       fail-fast: false
     env:
       PORT: 4426
@@ -133,12 +133,12 @@ jobs:
         uses: denoland/setup-deno@v2
         if: matrix.run == 'native' && matrix.jsrt == 'deno'
         with:
-          deno-version: "2.0.0"  # minimum supported version
+          deno-version: "2.0.0" # minimum supported version
       - name: Install Node
         uses: actions/setup-node@v6
         if: matrix.run == 'native' && matrix.jsrt == 'node'
         with:
-          node-version: "20"  # minimum supported version
+          node-version: "20" # minimum supported version
       - name: Build Docker image
         uses: docker/build-push-action@v6
         if: matrix.run == 'docker'
@@ -146,7 +146,7 @@ jobs:
           context: server/
           file: server/Dockerfile.${{ matrix.jsrt }}
           load: true
-          tags: brainicism/bgutil-ytdlp-pot-provider:ci
+          tags: brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
       - name: Test server method
         timeout-minutes: 3
         shell: bash
@@ -169,7 +169,7 @@ jobs:
             fi
             PIDENO=$!
           else
-            docker run --name bgutil-provider -d -p ${{ env.PORT }}:4416 brainicism/bgutil-ytdlp-pot-provider:ci
+            docker run --name bgutil-provider -d -p ${{ env.PORT }}:4416 brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
           fi
 
           echo "Waiting for server to be up..."
