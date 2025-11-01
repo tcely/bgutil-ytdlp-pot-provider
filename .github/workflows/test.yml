@@ -66,7 +66,7 @@ jobs:
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno cache --lock=deno.lock server/src/generate_once.ts server/src/main.ts
+            deno install --frozen
           else
             npm ci && npx tsc
           fi
@@ -187,7 +187,7 @@ jobs:
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               deno --version
               cd server
-              deno cache --lock=deno.lock src/main.ts src/generate_once.ts
+              deno install --frozen
               deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
