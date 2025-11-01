@@ -74,7 +74,7 @@ jobs:
           exit_code=0
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
               echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/build/generate_once.js --version)"
-              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
+              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net server/src/generate_once.ts | tail -n 1)
           else
               echo "script version: $(node server/build/generate_once.js --version)"
               script_output=$(node server/build/generate_once.js | tail -n 1)
