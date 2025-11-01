@@ -44,7 +44,6 @@ jobs:
     strategy:
       matrix:
         jsrt: [deno, node]
-        run: [native, docker]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -55,12 +54,12 @@ jobs:
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
       - name: Install Deno
         uses: denoland/setup-deno@v2
-        if: matrix.run == 'native' && matrix.jsrt == 'deno'
+        if: matrix.jsrt == 'deno'
         with:
           deno-version: "2.0.0" # minimum supported version
       - name: Install Node
         uses: actions/setup-node@v6
-        if: matrix.run == 'native' && matrix.jsrt == 'node'
+        if: matrix.jsrt == 'node'
         with:
           node-version: "20" # minimum supported version
       - name: Install and build server dependencies
