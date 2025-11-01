@@ -41,6 +41,11 @@ jobs:
   script-method:
     name: Test plugin (script method)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jsrt: [deno, node]
+        run: [native, docker]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -48,8 +53,18 @@ jobs:
           python-version: "3.x" # keep in sync with yt-dlp's python requirement
       - name: Download yt-dlp
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        if: matrix.run == 'native' && matrix.jsrt == 'deno'
+        with:
+          deno-version: "2.0.0" # minimum supported version
+      - name: Install Node
+        uses: actions/setup-node@v6
+        if: matrix.run == 'native' && matrix.jsrt == 'node'
+        with:
+          node-version: "20" # minimum supported version
       - name: Install and build server dependencies
-        run: cd server/ && npm ci && npx tsc
+        run: cd server/ && npm ci && npx tsc #TODO: install deno dependencies
       - name: Install plugin
         run: |
           mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
@@ -58,11 +73,15 @@ jobs:
         shell: bash
         run: |
           exit_code=0
-
-          echo "script version: $(node server/build/generate_once.js --version)"
+          if [ "${{ matrix.jsrt }}" = "deno" ]; then
+              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/build/generate_once.js --version)"
+              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
+          else
+              echo "script version: $(node server/build/generate_once.js --version)"
+              script_output=$(node server/build/generate_once.js | tail -n 1)
+          fi
 
           # check that the script is returning a POT
-          script_output=$(node server/build/generate_once.js | tail -n 1)
           echo "::group::POT response from the script"
           echo "$script_output" | jq -C
           echo "::endgroup::"
