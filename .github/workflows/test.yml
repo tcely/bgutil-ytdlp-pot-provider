@@ -66,7 +66,7 @@ jobs:
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen
+            deno install --frozen --allow-scripts
           else
             npm ci && npx tsc
           fi
@@ -79,7 +79,7 @@ jobs:
         run: |
           exit_code=0
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/build/generate_once.js --version)"
+              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/src/generate_once.js --version)"
               script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
           else
               echo "script version: $(node server/build/generate_once.js --version)"
@@ -187,7 +187,7 @@ jobs:
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               deno --version
               cd server
-              deno install --frozen
+              deno install --frozen --allow-scripts
               deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
