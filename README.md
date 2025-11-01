@@ -39,11 +39,11 @@ The provider is a Node.js HTTP server. You have two options for running it: as a
 
 **Docker:**
 
-<!--TODO: deno-->
-
 ```shell
 docker run --name bgutil-provider -d -p 4416:4416 --init brainicism/bgutil-ytdlp-pot-provider
 ```
+
+Our Docker image comes in two flavors: Node or Deno. The `latest` tag defaults to Node, but you can specify an alternate version/flavor like so: `brainicism/bgutil-ytdlp-pot-provider:1.2.2-deno`
 
 > [!IMPORTANT]
 > Note that the docker container's network is isolated from your local network by default. If you are using a local proxy server, it will not be accessible from within the container unless you pass `--net=host` as well.
