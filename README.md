@@ -27,7 +27,7 @@ The provider comes in two parts:
 1. yt-dlp `2025.05.22` or above.
 
 2. If using Docker image for option (a) for the provider, the Docker runtime is required.  
-   Otherwise, Node.js (>= 20) or Deno (>= 2.2.0) is required. You will also need git to clone the repository.
+   Otherwise, Node.js (>= 20) or Deno (>= 2.0.0) is required. You will also need git to clone the repository.
 
 ### 1. Set up the provider
 
@@ -43,7 +43,7 @@ The provider is a Node.js HTTP server. You have two options for running it: as a
 docker run --name bgutil-provider -d -p 4416:4416 --init brainicism/bgutil-ytdlp-pot-provider
 ```
 
-Our Docker image comes in two flavors: Node or Deno. The `latest` tag defaults to Node, but you can specify an alternate version/flavor like so: `brainicism/bgutil-ytdlp-pot-provider:1.2.2-deno`
+Our Docker image comes in two flavors: Node or Deno. The `:latest` tag defaults to Node, but you can specify an alternate version/flavor like so: `brainicism/bgutil-ytdlp-pot-provider:1.2.2-deno`. The `:node` tag also points to the latest Node image, and `:deno` points to the latest Deno image.
 
 > [!IMPORTANT]
 > Note that the docker container's network is isolated from your local network by default. If you are using a local proxy server, it will not be accessible from within the container unless you pass `--net=host` as well.
