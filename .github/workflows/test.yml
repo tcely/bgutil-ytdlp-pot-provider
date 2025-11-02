@@ -66,7 +66,7 @@ jobs:
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen --allow-scripts
+            deno install --frozen --allow-scripts=npm:canvas
           else
             npm ci && npx tsc
           fi
@@ -185,7 +185,7 @@ jobs:
 
           if [ "${{ matrix.run }}" = "native" ]; then
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              (cd server && deno install --frozen --allow-scripts=canvas)
+              (cd server && deno install --frozen --allow-scripts=npm:canvas)
               deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
