@@ -119,7 +119,7 @@ jobs:
             [ "$exit_code" -eq 0 ] && exit_code=1
           fi
 
-          pot_response=$(echo "$script_response" | grep -A1 -m1 '\[youtube\] \[pot:bgutil:script\] TRACE: JSON response:' | tail -n1 | jq -r '.poToken')
+          pot_response=$(echo "$script_response" | grep -A1 -m1 '\[youtube\] \[pot:bgutil:script-${{ matrix.jsrt }}\] TRACE: JSON response:' | tail -n1 | jq -r '.poToken')
           echo "POT: $pot_response"
           if [[ "$pot_response" == "null" || -z "$pot_response" || "$pot_response" == '""' ]]; then
              echo "::error title=Failed to generate POT,file=plugin/yt_dlp_plugins/extractor/getpot_bgutil_script.py::\
