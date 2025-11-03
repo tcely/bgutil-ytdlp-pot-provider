@@ -10,7 +10,6 @@ import subprocess
 from typing import Iterable, TypeVar
 
 from yt_dlp.extractor.youtube.pot.provider import (
-    PoTokenProvider,
     PoTokenProviderError,
     PoTokenRequest,
     PoTokenResponse,
@@ -76,7 +75,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             return False
         stdout, stderr, returncode = Popen.run(
             [self._jsrt_path, *self._jsrt_args(), script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            timeout=self._GET_SERVER_VSN_TIMEOUT)
+            timeout=int(self._GET_SERVER_VSN_TIMEOUT))
         if returncode:
             self.logger.warning(
                 f'Failed to check script version. '
@@ -118,7 +117,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         try:
             stdout, stderr, returncode = Popen.run(
                 command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=self._GETPOT_TIMEOUT)
+                timeout=int(self._GETPOT_TIMEOUT))
         except subprocess.TimeoutExpired as e:
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})')
@@ -177,7 +176,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
         try:
             stdout, stderr, returncode = Popen.run(
                 [node_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=self._GET_SERVER_VSN_TIMEOUT)
+                timeout=int(self._GET_SERVER_VSN_TIMEOUT))
             stdout = stdout.strip()
             mobj = re.match(r'v(\d+)\.(\d+)\.(\d+)', stdout)
             if returncode or not mobj:
@@ -200,7 +199,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
 
 
 @register_preference(BgUtilScriptNodePTP)
-def bgutil_script_node_getpot_preference(provider: PoTokenProvider, request):
+def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request):
     return 10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1
 
 
