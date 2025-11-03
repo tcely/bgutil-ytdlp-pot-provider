@@ -31,7 +31,6 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _script_path_impl(self) -> str:
         raise NotImplementedError
 
-    @abc.abstractmethod
     def _jsrt_args(self) -> Iterable[str]:
         return ()
 
