@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import functools
 import json
 import os.path
@@ -7,7 +8,9 @@ import re
 import shutil
 import subprocess
 
+from typing import Iterable, TypeVar
 from yt_dlp.extractor.youtube.pot.provider import (
+    PoTokenProvider,
     PoTokenProviderError,
     PoTokenRequest,
     PoTokenResponse,
@@ -20,66 +23,60 @@ from yt_dlp.utils import Popen
 from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
 
 
-@register_provider
-class BgUtilScriptPTP(BgUtilPTPBase):
-    PROVIDER_NAME = 'bgutil:script'
+T = TypeVar('T')
+
+
+class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
+    _SCRIPT_BASENAME: str
+
+    @abc.abstractmethod
+    def _script_path_impl(self) -> str:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _jsrt_args(self) -> Iterable[str]:
+        return ()
+
+    @abc.abstractmethod
+    def _jsrt_path_impl(self) -> str | None:
+        return None
+
+    _MIN_NODE_VSN = (20, 0, 0)
+    _HOMEDIR =  os.path.expanduser('~')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_script = functools.cache(self._check_script_impl)
 
+    def _base_config_arg(self, key: str, default: T = None) -> str | T:
+        return self.ie._configuration_arg(
+            ie_key='youtubepot-bgutilscript', key=key, default=[default])[0]
+
     @functools.cached_property
-    def _script_path(self):
-        script_path = self._configuration_arg(
-            'script_path', casesense=True, default=[None])[0]
+    def _script_path(self) -> str:
+        return self._script_path_impl()
 
-        if script_path:
-            return os.path.expandvars(script_path)
-
-        # check deprecated arg
-        deprecated_script_path = self.ie._configuration_arg(
-            ie_key='youtube', key='getpot_bgutil_script', default=[None])[0]
-
-        if deprecated_script_path:
-            self._warn_and_raise(
-                "'youtube:getpot_bgutil_script' extractor arg is deprecated, use 'youtubepot-bgutilscript:script_path' instead")
-
-        # default if no arg was passed
-        home = os.path.expanduser('~')
-        default_path = os.path.join(
-            home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
-        self.logger.debug(
-            f'No script path passed, defaulting to {default_path}')
-        return default_path
+    @functools.cached_property
+    def _jsrt_path(self) -> str | None:
+        return self._jsrt_path_impl()
 
     def is_available(self):
         return self._check_script(self._script_path)
-
-    @functools.cached_property
-    def _node_path(self):
-        node_path = shutil.which('node')
-        if node_path is None:
-            return None
-        vsn = self._check_node_version(node_path)
-        if vsn:
-            self.logger.trace(f'Node version: {vsn}')
-            return node_path
 
     def _check_script_impl(self, script_path):
         if not os.path.isfile(script_path):
             self.logger.debug(
                 f"Script path doesn't exist: {script_path}")
             return False
-        if os.path.basename(script_path) != 'generate_once.js':
+        if os.path.basename(script_path) != self._SCRIPT_BASENAME:
             self.logger.warning(
-                'Incorrect script passed to extractor args. Path to generate_once.js required', once=True)
+                f'The script path passed in the extractor argument '
+                f'has a wrong base name, expected {self._SCRIPT_BASENAME}.', once=True)
             return False
-        node_path = self._node_path
-        if not node_path:
-            self.logger.error('Node.js executable not found. Please ensure Node.js is installed and available in PATH.')
+        if not self._jsrt_path:
             return False
         stdout, stderr, returncode = Popen.run(
-            [self._node_path, script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            [self._jsrt_path, *self._jsrt_args(), script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             timeout=self._GET_SERVER_VSN_TIMEOUT)
         if returncode:
             self.logger.warning(
@@ -92,30 +89,6 @@ class BgUtilScriptPTP(BgUtilPTPBase):
             self._check_version(stdout.strip(), name='script')
             return True
 
-    def _check_node_version(self, node_path):
-        try:
-            stdout, stderr, returncode = Popen.run(
-                [node_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=self._GET_SERVER_VSN_TIMEOUT)
-            stdout = stdout.strip()
-            mobj = re.match(r'v(\d+)\.(\d+)\.(\d+)', stdout)
-            if returncode or not mobj:
-                raise ValueError
-            node_vsn = tuple(map(int, mobj.groups()))
-            if node_vsn >= self._MIN_NODE_VSN:
-                return node_vsn
-            raise RuntimeError
-        except RuntimeError:
-            min_vsn_str = 'v' + '.'.join(str(v) for v in self._MIN_NODE_VSN)
-            self.logger.warning(
-                f'Node version too low. '
-                f'(got {stdout}, but at least {min_vsn_str} is required)')
-        except (subprocess.TimeoutExpired, ValueError):
-            self.logger.warning(
-                f'Failed to check node version. '
-                f'Node returned {returncode} exit status. '
-                f'Node stdout: {stdout}; Node stderr: {stderr}')
-
     def _real_request_pot(
         self,
         request: PoTokenRequest,
@@ -124,7 +97,7 @@ class BgUtilScriptPTP(BgUtilPTPBase):
         self.logger.trace(
             f'Generating POT via script: {self._script_path}')
 
-        command_args = [self._node_path, self._script_path]
+        command_args = [self._jsrt_path, *self._jsrt_args(), self._script_path]
         if proxy := request.request_proxy:
             command_args.extend(['-p', proxy])
         command_args.extend(['-c', get_webpo_content_binding(request)[0]])
@@ -180,10 +153,72 @@ class BgUtilScriptPTP(BgUtilPTPBase):
         return PoTokenResponse(po_token=script_data_resp['poToken'])
 
 
-@register_preference(BgUtilScriptPTP)
-def bgutil_script_getpot_preference(provider, request):
-    return 1
+@register_provider
+class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
+    PROVIDER_NAME = 'bgutil:script-node'
+
+    _SCRIPT_BASENAME = 'generate_once.js'
+
+    def _script_path_impl(self) -> str:
+        if script_path := self._base_config_arg('script_path'):
+            return os.path.expandvars(script_path)
+
+        # default if no arg was passed
+        default_path = os.path.join(
+            self._HOMEDIR, 'bgutil-ytdlp-pot-provider', 'server', 'build', self._SCRIPT_BASENAME)
+        self.logger.debug(
+            f'No script path passed, defaulting to {default_path}')
+        return default_path
+
+    def _jsrt_path_impl(self) -> str | None:
+        node_path = shutil.which('node')
+        if node_path is None:
+            self.logger.error('Node.js executable not found. Please ensure Node.js is installed and available in PATH.')
+            return None
+        try:
+            stdout, stderr, returncode = Popen.run(
+                [node_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                timeout=self._GET_SERVER_VSN_TIMEOUT)
+            stdout = stdout.strip()
+            mobj = re.match(r'v(\d+)\.(\d+)\.(\d+)', stdout)
+            if returncode or not mobj:
+                raise ValueError
+            node_vsn = tuple(map(int, mobj.groups()))
+            if node_vsn >= self._MIN_NODE_VSN:
+                self.logger.trace(f'Node version: {vsn}')
+                return node_path
+            raise RuntimeError
+        except RuntimeError:
+            min_vsn_str = 'v' + '.'.join(str(v) for v in self._MIN_NODE_VSN)
+            self.logger.warning(
+                f'Node version too low. '
+                f'(got {stdout}, but at least {min_vsn_str} is required)')
+        except (subprocess.TimeoutExpired, ValueError):
+            self.logger.warning(
+                f'Failed to check node version. '
+                f'Node returned {returncode} exit status. '
+                f'Node stdout: {stdout}; Node stderr: {stderr}')
 
 
-__all__ = [BgUtilScriptPTP.__name__,
-           bgutil_script_getpot_preference.__name__]
+@register_preference(BgUtilScriptNodePTP)
+def bgutil_script_node_getpot_preference(provider: PoTokenProvider, request):
+    return 10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1
+
+
+@register_provider
+class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
+    PROVIDER_NAME = 'bgutil:script-deno'
+
+    _SCRIPT_BASENAME = 'generate_once.ts'
+
+
+@register_preference(BgUtilScriptDenoPTP)
+def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
+    return 1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10
+
+__all__ = [
+    BgUtilScriptNodePTP.__name__,
+    bgutil_script_node_getpot_preference.__name__,
+    BgUtilScriptDenoPTP.__name__,
+    bgutil_script_deno_getpot_preference.__name__,
+]
