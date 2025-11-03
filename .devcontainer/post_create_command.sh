@@ -2,4 +2,4 @@ curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download
 
 pip install ruff autopep8
 
-curl -fsSL https://deno.land/install.sh | sh -s -- v2.2.0 -y
+curl -fsSL https://deno.land/install.sh | sh -s -- v2.0.0 -y
