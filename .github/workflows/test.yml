@@ -113,7 +113,7 @@ jobs:
             echo "::warning title=yt-dlp failed when testing script,file=plugin/yt_dlp_plugins/extractor/getpot_bgutil_script.py::yt-dlp returned $ret exit status"
           fi
 
-          if [[ "$script_response" != *"[youtube] [pot:bgutil:script] TRACE: Generating POT via script: "* ]]; then
+          if [[ "$script_response" != *"[youtube] [pot:bgutil:script-${{ matrix.jsrt }}] TRACE: Generating POT via script: "* ]]; then
             echo "::error title=BgUtilScript was not invoked,file=plugin/yt_dlp_plugins/extractor/getpot_bgutil_script.py::\
           BgUtilScript was not invoked"
             [ "$exit_code" -eq 0 ] && exit_code=1
