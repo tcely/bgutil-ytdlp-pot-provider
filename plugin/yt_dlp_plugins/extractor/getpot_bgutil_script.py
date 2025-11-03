@@ -7,8 +7,8 @@ import os.path
 import re
 import shutil
 import subprocess
-
 from typing import Iterable, TypeVar
+
 from yt_dlp.extractor.youtube.pot.provider import (
     PoTokenProvider,
     PoTokenProviderError,
@@ -21,7 +21,6 @@ from yt_dlp.extractor.youtube.pot.utils import get_webpo_content_binding
 from yt_dlp.utils import Popen
 
 from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
-
 
 T = TypeVar('T')
 
@@ -42,7 +41,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         return None
 
     _MIN_NODE_VSN = (20, 0, 0)
-    _HOMEDIR =  os.path.expanduser('~')
+    _HOMEDIR = os.path.expanduser('~')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -185,7 +184,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
                 raise ValueError
             node_vsn = tuple(map(int, mobj.groups()))
             if node_vsn >= self._MIN_NODE_VSN:
-                self.logger.trace(f'Node version: {vsn}')
+                self.logger.trace(f'Node version: {node_vsn}')
                 return node_path
             raise RuntimeError
         except RuntimeError:
@@ -215,6 +214,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
 @register_preference(BgUtilScriptDenoPTP)
 def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
     return 1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10
+
 
 __all__ = [
     BgUtilScriptNodePTP.__name__,
