@@ -29,7 +29,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     _JSRT_NAME: str
     _JSRT_EXEC: str
     _JSRT_VSN_REGEX: str
-    _JSRT_MINVER: tuple[int, ...]
+    _JSRT_MIN_VER: tuple[int, ...]
 
     @abc.abstractmethod
     def _script_path_impl(self) -> str:
@@ -65,11 +65,11 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             return jsrt_path
 
     def _jsrt_has_support(self, v: str) -> bool:
-        if self._jsrt_vsn_tup(v) >= self._JSRT_MINVER:
+        if self._jsrt_vsn_tup(v) >= self._JSRT_MIN_VER:
             self.logger.trace(f'{self._JSRT_NAME} version: {v}')
             return True
         else:
-            min_vsn_str = '.'.join(str(v) for v in self._JSRT_MINVER)
+            min_vsn_str = '.'.join(str(v) for v in self._JSRT_MIN_VER)
             self.logger.warning(
                 f'{self._JSRT_NAME} version too low. '
                 f'(got {v}, but at least {min_vsn_str} is required)')
@@ -211,7 +211,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
     _JSRT_NAME = 'Node.js'
     _JSRT_EXEC = 'node'
     _JSRT_VSN_REGEX = r'^v(\S+)'
-    _JSRT_MINVER = (20, 0, 0)
+    _JSRT_MIN_VER = (20, 0, 0)
 
     def _script_path_impl(self) -> str:
         return os.path.join(
