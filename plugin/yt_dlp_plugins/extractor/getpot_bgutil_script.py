@@ -237,7 +237,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
             self._server_home, 'src', self._SCRIPT_BASENAME)
 
     def _jsrt_args(self) -> Iterable[str]:
-        return ('-A', )
+        return ('-A', '--unstable-sloppy-imports')
 
 
 @register_preference(BgUtilScriptDenoPTP)
