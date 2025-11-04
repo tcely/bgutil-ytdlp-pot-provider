@@ -41,6 +41,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_path_impl(self) -> str | None:
         jsrt_path = shutil.which(self._JSRT_EXEC)
         if jsrt_path is None:
+            # TODO: test if root dir works
             self.logger.warning(
                 f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is installed and available '
                 'in PATH or the root directory of yt-dlp.')
@@ -79,6 +80,8 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _script_path(self) -> str:
         return self._script_path_impl()
 
+    p=lambda this,pre:lambda x:this.logger.debug(pre+str(x)) or x#dbg
+
     @functools.cached_property
     def _jsrt_path(self) -> str | None:
         return self._jsrt_path_impl()
@@ -94,8 +97,8 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         return tuple(int_or_none(x, default=0) for x in v.split('.'))
 
     def _base_config_arg(self, key: str, default: T = None) -> str | T:
-        return self.ie._configuration_arg(
-            ie_key='youtubepot-bgutilscript', key=key, default=[default])[0]
+        return self.p('earg:'+key+':')(self.ie._configuration_arg(
+            ie_key='youtubepot-bgutilscript', key=key, default=[default])[0])
 
     @property
     def _server_home(self) -> str:
@@ -220,7 +223,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
 
 @register_preference(BgUtilScriptNodePTP)
 def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request):
-    return 10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1
+    return provider.p('node pref')(10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1)
 
 
 @register_provider
@@ -243,7 +246,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
 
 @register_preference(BgUtilScriptDenoPTP)
 def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
-    return 1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10
+    return provider.p('deno pref')(1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10)
 
 
 __all__ = [
