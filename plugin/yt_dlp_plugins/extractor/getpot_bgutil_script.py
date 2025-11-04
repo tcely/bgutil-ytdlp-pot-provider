@@ -223,7 +223,7 @@ def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request)
     return 10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1
 
 
-# @register_provider
+@register_provider
 class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     PROVIDER_NAME = 'bgutil:script-deno'
     _SCRIPT_BASENAME = 'generate_once.ts'
@@ -240,7 +240,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
         return ('-A', )
 
 
-# @register_preference(BgUtilScriptDenoPTP)
+@register_preference(BgUtilScriptDenoPTP)
 def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
     return 1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10
 
