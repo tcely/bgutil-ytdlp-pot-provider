@@ -1,0 +1,3 @@
+Dockerfile.* linguist-language=Dockerfile
+deno.lock linguist-generated
+package-lock.json linguist-generated
