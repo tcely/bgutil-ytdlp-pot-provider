@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import functools
 import json
-import os.path
+import os
 import re
 import shutil
 import subprocess
@@ -17,7 +17,7 @@ from yt_dlp.extractor.youtube.pot.provider import (
     register_provider,
 )
 from yt_dlp.extractor.youtube.pot.utils import get_webpo_content_binding
-from yt_dlp.utils import Popen
+from yt_dlp.utils import Popen, int_or_none
 
 from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
 
@@ -26,6 +26,10 @@ T = TypeVar('T')
 
 class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     _SCRIPT_BASENAME: str
+    _JSRT_NAME: str
+    _JSRT_EXEC: str
+    _JSRT_VSN_REGEX: str
+    _JSRT_MINVER: tuple[int, ...]
 
     @abc.abstractmethod
     def _script_path_impl(self) -> str:
@@ -34,20 +38,42 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_args(self) -> Iterable[str]:
         return ()
 
-    @abc.abstractmethod
     def _jsrt_path_impl(self) -> str | None:
-        return None
+        jsrt_path = shutil.which(self._JSRT_EXEC)
+        if jsrt_path is None:
+            self.logger.error(
+                f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is installed and available '
+                'in PATH or the root directory of yt-dlp.')
+            return None
+        try:
+            stdout, stderr, returncode = Popen.run(
+                [jsrt_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                timeout=int(self._GET_SERVER_VSN_TIMEOUT))
+        except subprocess.TimeoutExpired:
+            self.logger.warning(
+                f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
+                'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds')
+            return None
+        mobj = re.search(self._JSRT_VSN_REGEX, stdout)
+        if returncode or not mobj:
+            self.logger.warning(
+                f'Failed to check {self._JSRT_NAME} version. '
+                f'{self._JSRT_NAME} returned {returncode} exit status. '
+                f'Process stdout: {stdout}; stderr: {stderr}')
+            return None
+        if self._jsrt_has_support(mobj.group(1)):
+            return jsrt_path
 
-    _MIN_NODE_VSN = (20, 0, 0)
-    _HOMEDIR = os.path.expanduser('~')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._check_script = functools.cache(self._check_script_impl)
-
-    def _base_config_arg(self, key: str, default: T = None) -> str | T:
-        return self.ie._configuration_arg(
-            ie_key='youtubepot-bgutilscript', key=key, default=[default])[0]
+    def _jsrt_has_support(self, v: str) -> bool:
+        if self._jsrt_vsn_tup(v) >= self._JSRT_MINVER:
+            self.logger.trace(f'{self._JSRT_NAME} version: {v}')
+            return True
+        else:
+            min_vsn_str = '.'.join(str(v) for v in self._JSRT_MINVER)
+            self.logger.warning(
+                f'{self._JSRT_NAME} version too low. '
+                f'(got {v}, but at least {min_vsn_str} is required)')
+            return False
 
     @functools.cached_property
     def _script_path(self) -> str:
@@ -57,10 +83,38 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_path(self) -> str | None:
         return self._jsrt_path_impl()
 
-    def is_available(self):
+    _HOMEDIR = os.path.expanduser('~')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._check_script = functools.cache(self._check_script_impl)
+
+    @staticmethod
+    def _jsrt_vsn_tup(v: str):
+        return tuple(int_or_none(x, default=0) for x in v.split('.'))
+
+    def _base_config_arg(self, key: str, default: T = None) -> str | T:
+        return self.ie._configuration_arg(
+            ie_key='youtubepot-bgutilscript', key=key, default=[default])[0]
+
+    @property
+    def _server_home(self) -> str:
+        if script_path := self._base_config_arg('script_path'):
+            return os.path.abspath(os.path.join(
+                os.path.expandvars(script_path), os.pardir, os.pardir))
+
+        # TODO: an base cfg arg for server home
+        # default if no arg was passed
+        default_home = os.path.join(
+            self._HOMEDIR, 'bgutil-ytdlp-pot-provider', 'server')
+        self.logger.debug(
+            f'No script path passed, defaulting to {default_home}')
+        return default_home
+
+    def is_available(self) -> bool:
         return self._check_script(self._script_path)
 
-    def _check_script_impl(self, script_path):
+    def _check_script_impl(self, script_path) -> bool:
         if not os.path.isfile(script_path):
             self.logger.debug(
                 f"Script path doesn't exist: {script_path}")
@@ -153,48 +207,15 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
 @register_provider
 class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
     PROVIDER_NAME = 'bgutil:script-node'
-
     _SCRIPT_BASENAME = 'generate_once.js'
+    _JSRT_NAME = 'Node.js'
+    _JSRT_EXEC = 'node'
+    _JSRT_VSN_REGEX = r'^v(\S+)'
+    _JSRT_MINVER = (20, 0, 0)
 
     def _script_path_impl(self) -> str:
-        if script_path := self._base_config_arg('script_path'):
-            return os.path.expandvars(script_path)
-
-        # default if no arg was passed
-        default_path = os.path.join(
-            self._HOMEDIR, 'bgutil-ytdlp-pot-provider', 'server', 'build', self._SCRIPT_BASENAME)
-        self.logger.debug(
-            f'No script path passed, defaulting to {default_path}')
-        return default_path
-
-    def _jsrt_path_impl(self) -> str | None:
-        node_path = shutil.which('node')
-        if node_path is None:
-            self.logger.error('Node.js executable not found. Please ensure Node.js is installed and available in PATH.')
-            return None
-        try:
-            stdout, stderr, returncode = Popen.run(
-                [node_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=int(self._GET_SERVER_VSN_TIMEOUT))
-            stdout = stdout.strip()
-            mobj = re.match(r'v(\d+)\.(\d+)\.(\d+)', stdout)
-            if returncode or not mobj:
-                raise ValueError
-            node_vsn = tuple(map(int, mobj.groups()))
-            if node_vsn >= self._MIN_NODE_VSN:
-                self.logger.trace(f'Node version: {node_vsn}')
-                return node_path
-            raise RuntimeError
-        except RuntimeError:
-            min_vsn_str = 'v' + '.'.join(str(v) for v in self._MIN_NODE_VSN)
-            self.logger.warning(
-                f'Node version too low. '
-                f'(got {stdout}, but at least {min_vsn_str} is required)')
-        except (subprocess.TimeoutExpired, ValueError):
-            self.logger.warning(
-                f'Failed to check node version. '
-                f'Node returned {returncode} exit status. '
-                f'Node stdout: {stdout}; Node stderr: {stderr}')
+        return os.path.join(
+            self._server_home, 'build', self._SCRIPT_BASENAME)
 
 
 @register_preference(BgUtilScriptNodePTP)
@@ -205,8 +226,18 @@ def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request)
 # @register_provider
 class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     PROVIDER_NAME = 'bgutil:script-deno'
-
     _SCRIPT_BASENAME = 'generate_once.ts'
+    _JSRT_NAME = 'Deno'
+    _JSRT_EXEC = 'deno'
+    _JSRT_VSN_REGEX = r'^deno (\S+)'
+    _JSRT_MIN_VER = (2, 0, 0)
+
+    def _script_path_impl(self) -> str:
+        return os.path.join(
+            self._server_home, 'src', self._SCRIPT_BASENAME)
+
+    def _jsrt_args(self) -> Iterable[str]:
+        return ('-A', )
 
 
 # @register_preference(BgUtilScriptDenoPTP)
