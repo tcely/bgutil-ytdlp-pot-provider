@@ -41,7 +41,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_path_impl(self) -> str | None:
         jsrt_path = shutil.which(self._JSRT_EXEC)
         if jsrt_path is None:
-            self.logger.error(
+            self.logger.warning(
                 f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is installed and available '
                 'in PATH or the root directory of yt-dlp.')
             return None
@@ -69,7 +69,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             self.logger.trace(f'{self._JSRT_NAME} version: {v}')
             return True
         else:
-            min_vsn_str = '.'.join(str(v) for v in self._JSRT_MIN_VER)
+            min_vsn_str = '.'.join(str(v_) for v_ in self._JSRT_MIN_VER)
             self.logger.warning(
                 f'{self._JSRT_NAME} version too low. '
                 f'(got {v}, but at least {min_vsn_str} is required)')
