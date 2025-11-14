@@ -35,46 +35,55 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _script_path_impl(self) -> str:
         raise NotImplementedError
 
+    def _jsrt_warn_unavail_impl(self) -> bool:
+        return False
+
     def _jsrt_args(self) -> Iterable[str]:
         return ()
 
     def _jsrt_path_impl(self) -> str | None:
+        report_jsrt_unavail = self.logger.warning if self._jsrt_warn_unavail else self.logger.debug
         jsrt_path = shutil.which(self._JSRT_EXEC)
         if jsrt_path is None:
             # TODO: test if root dir works
-            self.logger.warning(
+            report_jsrt_unavail(
                 f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is installed and available '
-                'in PATH or the root directory of yt-dlp.')
+                'in PATH or the root directory of yt-dlp.', once=True)
             return None
         try:
             stdout, stderr, returncode = Popen.run(
                 [jsrt_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 timeout=int(self._GET_SERVER_VSN_TIMEOUT))
         except subprocess.TimeoutExpired:
-            self.logger.warning(
+            report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
-                'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds')
+                'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds', once=True)
             return None
         mobj = re.search(self._JSRT_VSN_REGEX, stdout)
         if returncode or not mobj:
-            self.logger.warning(
+            report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version. '
                 f'{self._JSRT_NAME} returned {returncode} exit status. '
-                f'Process stdout: {stdout}; stderr: {stderr}')
+                f'Process stdout: {stdout}; stderr: {stderr}', once=True)
             return None
         if self._jsrt_has_support(mobj.group(1)):
             return jsrt_path
 
     def _jsrt_has_support(self, v: str) -> bool:
+        report_jsrt_unavail = self.logger.warning if self._jsrt_warn_unavail else self.logger.debug
         if self._jsrt_vsn_tup(v) >= self._JSRT_MIN_VER:
             self.logger.trace(f'{self._JSRT_NAME} version: {v}')
             return True
         else:
             min_vsn_str = '.'.join(str(v_) for v_ in self._JSRT_MIN_VER)
-            self.logger.warning(
+            report_jsrt_unavail(
                 f'{self._JSRT_NAME} version too low. '
-                f'(got {v}, but at least {min_vsn_str} is required)')
+                f'(got {v}, but at least {min_vsn_str} is required)', once=True)
             return False
+
+    @functools.cached_property
+    def _jsrt_warn_unavail(self) -> bool:
+        return self._jsrt_warn_unavail_impl()
 
     @functools.cached_property
     def _script_path(self) -> str:
@@ -214,6 +223,9 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
     _JSRT_VSN_REGEX = r'^v(\S+)'
     _JSRT_MIN_VER = (20, 0, 0)
 
+    def _jsrt_warn_unavail_impl(self) -> bool:
+        return self._base_config_arg('prefer_node', 'false') != 'false'
+
     def _script_path_impl(self) -> str:
         return os.path.join(
             self._server_home, 'build', self._SCRIPT_BASENAME)
@@ -232,6 +244,9 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     _JSRT_EXEC = 'deno'
     _JSRT_VSN_REGEX = r'^deno (\S+)'
     _JSRT_MIN_VER = (2, 0, 0)
+
+    def _jsrt_warn_unavail_impl(self) -> bool:
+        return self._base_config_arg('prefer_node') == 'false'
 
     def _script_path_impl(self) -> str:
         return os.path.join(
