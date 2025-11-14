@@ -1,5 +1,8 @@
 FROM denoland/deno:alpine-2.5.6
 EXPOSE 4416
+RUN mkdir /app
+RUN chown deno /app
+USER deno
 WORKDIR /app
 
 COPY tsconfig.json package.json deno.lock ./
