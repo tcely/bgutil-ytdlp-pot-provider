@@ -10,10 +10,7 @@ let cachedir;
 const homeDirectory = process.env.HOME || process.env.USERPROFILE;
 const { XDG_CACHE_HOME } = process.env;
 if (XDG_CACHE_HOME !== undefined) {
-    cachedir = path.resolve(
-        XDG_CACHE_HOME,
-        "bgutil-ytdlp-pot-provider",
-    );
+    cachedir = path.resolve(XDG_CACHE_HOME, "bgutil-ytdlp-pot-provider");
 } else if (homeDirectory) {
     cachedir = path.resolve(
         homeDirectory,
