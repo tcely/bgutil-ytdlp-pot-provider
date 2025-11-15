@@ -107,19 +107,33 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         return self.ie._configuration_arg(
             ie_key='youtubepot-bgutilscript', key=key, default=[default])[0]
 
-    @property
+    @functools.cached_property
     def _server_home(self) -> str:
+        # TODO: document this
+        if server_home := self._base_config_arg('server_home'):
+            return os.path.abspath(server_home)
+
         if script_path := self._base_config_arg('script_path'):
             return os.path.abspath(os.path.join(
                 os.path.expandvars(script_path), os.pardir, os.pardir))
 
-        # TODO: an base cfg arg for server home
         # default if no arg was passed
         default_home = os.path.join(
             self._HOMEDIR, 'bgutil-ytdlp-pot-provider', 'server')
         self.logger.debug(
             f'No script path passed, defaulting to {default_home}')
         return default_home
+
+    @functools.cached_property
+    def _script_cache_dir(self) -> str:
+        # don't use _HOMEDIR as the server is coded this way and accepts HOME and USERPROFILE regardless of the OS
+        home_dir = os.getenv('HOME') or os.getenv('USERPROFILE')
+        if (xdg_cache := os.getenv('XDG_CACHE_HOME')) is not None:
+            return os.path.abspath(os.path.join(xdg_cache, 'bgutil-ytdlp-pot-provider'))
+        elif home_dir:
+            return os.path.abspath(os.path.join(home_dir, '.cache', 'bgutil-ytdlp-pot-provider'))
+        else:
+            return self._server_home
 
     def is_available(self) -> bool:
         return self._check_script(self._script_path)
@@ -254,7 +268,13 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
 
     def _jsrt_args(self) -> Iterable[str]:
         # TODO: restrict permissions!
-        return ('-A', '--unstable-sloppy-imports')
+        return (
+            'run', '--unstable-sloppy-imports',
+            '--allow-env', '--allow-net',
+            f'--allow-ffi={self._server_home}',
+            f'--allow-write={self._script_cache_dir}',
+            f'--allow-read={self._script_cache_dir}',
+        )
 
 
 @register_preference(BgUtilScriptDenoPTP)
