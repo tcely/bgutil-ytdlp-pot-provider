@@ -12,9 +12,11 @@ RUN deno cache src/main.ts
 # TODO: tcely: entirely avoid --unstable-sloppy-imports
 RUN deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net --unstable-sloppy-imports src/main.ts
 
-FROM denoland/deno:alpine AS server
+FROM gcr.io/distroless/cc-debian13:debug AS server
 
-USER deno
+COPY --from=build /tini /tini
+
+USER nonroot
 WORKDIR /app
 
 COPY --from=build /app/server ./
