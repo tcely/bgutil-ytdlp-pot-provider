@@ -3,7 +3,6 @@ import { VERSION } from "./utils.ts";
 import { Command } from "commander";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 // Follow XDG Base Directory Specification: https://specifications.freedesktop.org/basedir-spec/latest/
 let cachedir;
