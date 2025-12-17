@@ -84,12 +84,12 @@ jobs:
             declare -r ts_path='server/src/generate_once.js'
             case "${{ matrix.jsrt }}" in
               (deno)
-                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports)
+                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write --allow-net)
                 ;;
               (node) declare -ar jsrt_cmd=(node) ;;
               (*) declare -ar jsrt_cmd=(false) ;;
             esac
-            "${jsrt_cmd[@]}" "${ts_path}" "$@"
+            "${jsrt_cmd[@]}" -- "${ts_path}" "$@"
           }
           echo "script version: $(gen_once --version)"
           script_output=$(gen_once | tail -n 1)
