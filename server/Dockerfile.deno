@@ -8,9 +8,9 @@ USER deno
 WORKDIR /app/build
 
 COPY tsconfig.json package.json deno.lock ./
-COPY src/ src/
+COPY --chown=deno:deno src/ src/
 
-RUN sed -i -e '/".\/(session_manager|utils).js";/s@.js";@.ts";@' src/*.ts
+RUN ls -al src ; sed -i -e '/".\/(session_manager|utils).js";/s@.js";@.ts";@' src/*.ts
 RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
 RUN deno cache src/main.ts
 RUN deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
