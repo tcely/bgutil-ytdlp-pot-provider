@@ -6,18 +6,15 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 FROM shared AS build
-USER node
-WORKDIR /app
 
 RUN npm ci
 
 COPY tsconfig.json ./
 COPY src/ src/
+
 RUN npx tsc
 
 FROM shared AS server
-USER node
-WORKDIR /app
 
 COPY --from=build /app/build /app/build
 
