@@ -15,6 +15,6 @@ FROM denoland/deno:alpine AS server
 
 USER deno
 WORKDIR /app
-COPY --from=builder /app/build/server /app/server
+COPY --from=build /app/build/server /app/server
 EXPOSE 4416
 ENTRYPOINT ["/tini", "--", "/app/server"]
