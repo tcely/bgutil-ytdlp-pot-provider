@@ -1,21 +1,25 @@
-FROM node:25-slim AS build
+FROM node:25-slim AS shared
 USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+FROM shared AS build
+USER node
+WORKDIR /app
+
 RUN npm ci
 
 COPY tsconfig.json ./
 COPY src/ src/
 RUN npx tsc
 
-FROM node:25-slim AS server
+FROM shared AS server
 USER node
 WORKDIR /app
 
 COPY --from=build /app/build /app/build
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
 
 EXPOSE 4416
 ENTRYPOINT ["node", "build/main.js"]
