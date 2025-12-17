@@ -1,14 +1,31 @@
-FROM denoland/deno:alpine-2.5.6
-EXPOSE 4416
-RUN mkdir /app
-RUN chown deno /app
+FROM denoland/deno:debian AS build
+
+# The HOME directory wasn't created in the base image
+RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
+
 USER deno
 WORKDIR /app
+WORKDIR /app/build
 
 COPY tsconfig.json package.json deno.lock ./
-COPY src/ src/
+COPY --chown=deno:deno src/ src/
+
+RUN sed -i -E -e '/from ".\/(session_manager|utils).js";/s@\.js";@\.ts";@' src/*.ts
 RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
 RUN deno cache src/main.ts
+RUN deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
 
-# deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
-ENTRYPOINT ["deno", "run", "--allow-env", "--allow-ffi", "--allow-net", "--allow-read=/app", "--unstable-sloppy-imports", "src/main.ts"]
+FROM gcr.io/distroless/cc-debian13:debug AS server
+SHELL ["/busybox/busybox", "sh", "-c"]
+
+COPY --from=build --chown=root:root /tini /tini
+COPY --from=build --chown=root:root /app/server /usr/bin/server
+
+USER nonroot
+WORKDIR /app
+
+COPY --from=build --chown=nonroot:nonroot /app/build/src /app/src
+
+EXPOSE 4416
+ENV DENO_NO_UPDATE_CHECK=true
+ENTRYPOINT ["/tini", "--", "/usr/bin/server"]
