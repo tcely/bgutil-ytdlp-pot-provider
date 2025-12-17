@@ -10,7 +10,7 @@ COPY src/ src/
 RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
 RUN deno cache src/main.ts
 # TODO: tcely: entirely avoid --unstable-sloppy-imports
-RUN DENO_UNSTABLE_SLOPPY_IMPORTS=true deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
+RUN deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net --unstable-sloppy-imports src/main.ts
 
 FROM denoland/deno:alpine AS server
 
