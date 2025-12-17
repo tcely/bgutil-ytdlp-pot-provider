@@ -9,7 +9,7 @@ COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
 RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
 RUN deno cache src/main.ts
-RUN deno compile --output=server --frozen --cached-only --allow-env --allow-ffi=/app/node_modules/.deno/ --allow-net --allow-read=/app src/main.ts
+RUN deno compile --output=server --frozen --cached-only --allow-env --allow-ffi=/app/node_modules/.deno/ --allow-net --allow-read=/app --unstable-sloppy-imports src/main.ts
 
 FROM denoland/deno:alpine AS server
 
