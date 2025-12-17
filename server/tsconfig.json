@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "incremental": true,
+        "rewriteRelativeImportExtensions": true,
         "outDir": "./build",
         "allowJs": true,
         "target": "es2022",
@@ -20,8 +21,6 @@
         "skipLibCheck": true,
         "noUncheckedIndexedAccess": true,
         "paths": {
-            "./session_manager.ts": ["./session_manager.js"],
-            "./utils.ts": ["./utils.js"],
             "commander": ["./types/commander.d.ts"]
         }
     },
