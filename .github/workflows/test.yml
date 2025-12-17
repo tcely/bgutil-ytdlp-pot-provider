@@ -84,7 +84,7 @@ jobs:
             declare ts_path='server/src/generate_once.js'
             case "${{ matrix.jsrt }}" in
               (deno)
-                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write --allow-net)
+                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write="${HOME}/.cache/" --allow-net)
                 ;;
               (node)
                   declare -ar jsrt_cmd=(node)
