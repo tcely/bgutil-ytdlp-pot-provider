@@ -19,9 +19,7 @@ if (XDG_CACHE_HOME !== undefined) {
     );
 } else {
     // fall back to a known path if environment variables are not found
-    const __dirname = import.meta.dirname;
-
-    cachedir = path.resolve(__dirname, "..");
+    cachedir = path.resolve(import.meta.dirname, "..");
 }
 if (!fs.existsSync(cachedir)) {
     fs.mkdir(cachedir, { recursive: true }, (err) => {
