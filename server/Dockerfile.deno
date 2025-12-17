@@ -4,7 +4,6 @@ FROM denoland/deno:debian AS build
 RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
 
 RUN mkdir -v /app && chown -v deno /app
-RUN ls -al /app /home
 USER deno
 WORKDIR /app/build
 
@@ -20,14 +19,11 @@ FROM gcr.io/distroless/cc-debian13:debug AS server
 SHELL ["/busybox/busybox", "sh", "-c"]
 
 COPY --from=build /tini /tini
+COPY --from=build --chown=root:root /app/server /usr/bin/server
 
 USER nonroot
 WORKDIR /app
 
-COPY --from=build /app/server ./
-
-RUN ls -al /app /home
-
 EXPOSE 4416
 ENV DENO_NO_UPDATE_CHECK=true
-ENTRYPOINT ["/tini", "--", "/app/server"]
+ENTRYPOINT ["/tini", "--", "/usr/bin/server"]
