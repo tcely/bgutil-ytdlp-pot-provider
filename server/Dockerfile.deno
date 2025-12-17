@@ -1,4 +1,4 @@
-FROM denoland/deno:alpine AS build
+FROM denoland/deno:debian AS build
 
 RUN mkdir /app
 RUN chown deno /app
