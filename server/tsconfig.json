@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "incremental": true,
+        "rewriteRelativeImportExtensions": true,
         "outDir": "./build",
         "allowJs": true,
         "target": "es2022",
