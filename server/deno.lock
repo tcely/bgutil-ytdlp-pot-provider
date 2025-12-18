@@ -1,5 +1,5 @@
 {
-  "version": "5",
+  "version": "4",
   "specifiers": {
     "npm:@commander-js/extra-typings@14": "14.0.0_commander@14.0.2",
     "npm:@eslint/js@^9.32.0": "9.39.2",
