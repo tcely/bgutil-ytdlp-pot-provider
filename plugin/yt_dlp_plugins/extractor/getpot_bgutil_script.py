@@ -269,8 +269,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     def _jsrt_args(self) -> Iterable[str]:
         # TODO: restrict permissions!
         return (
-            'run', '--unstable-sloppy-imports',
-            '--allow-env', '--allow-net',
+            'run', '--allow-env', '--allow-net',
             f'--allow-ffi={self._server_home}',
             f'--allow-write={self._script_cache_dir}',
             f'--allow-read={self._script_cache_dir}',
