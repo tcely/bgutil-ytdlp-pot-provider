@@ -8,14 +8,17 @@ RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
 
 USER deno
 WORKDIR /app
+COPY package.json tsconfig.json deno.lock ./
+COPY src/ src/
+COPY types/ types/
 WORKDIR /app/build
 
-COPY tsconfig.json package.json deno.lock ./
+COPY --chown=deno:deno package.json tsconfig.json deno.lock ./
 COPY --chown=deno:deno src/ src/
+COPY --chown=deno:deno types/ types/
 
-RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
-RUN deno cache src/main.ts
-RUN deno compile --output=/app/server --frozen --cached-only --allow-env --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
+RUN deno install --frozen --node-modules-dir=auto --allow-scripts=npm:canvas
+RUN deno compile --output=/app/server --frozen --cached-only --node-modules-dir=auto --allow-env --allow-ffi=./node_modules/.deno/ --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
 
 FROM gcr.io/distroless/cc-debian13:debug AS server
 SHELL ["/busybox/busybox", "sh", "-c"]
@@ -25,7 +28,11 @@ COPY --from=build --chown=root:root /app/server /usr/bin/server
 
 USER nonroot
 WORKDIR /app
+COPY --from=build --chown=nonroot:nonroot /app/src /app/src
+COPY --from=build --chown=nonroot:nonroot /app/types /app/types
+COPY --from=build --chown=nonroot:nonroot /app/build/deno.lock /app/build/package.json /app/build/tsconfig.json ./
 
 EXPOSE 4416
 ENV DENO_NO_UPDATE_CHECK=true
 ENTRYPOINT ["/tini", "--", "/usr/bin/server"]
+# deno run --frozen --cached-only --no-code-cache --node-modules-dir=auto --allow-env --allow-ffi=./node_modules/.deno/ --allow-net src/main.ts
