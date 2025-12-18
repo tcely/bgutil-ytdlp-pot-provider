@@ -81,7 +81,7 @@ jobs:
         run: |
           exit_code=0
           gen_once() {
-            declare ts_path='server/src/generate_once.js'
+            declare ts_path='server/src/generate_once.ts'
             case "${{ matrix.jsrt }}" in
               (deno)
                   declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write="${HOME}/.cache/" --allow-net)
