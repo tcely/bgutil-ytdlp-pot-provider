@@ -80,8 +80,9 @@ jobs:
         shell: bash
         run: |
           exit_code=0
+          generate_once='server/src/generate_once.ts'
           gen_once() {
-            declare ts_path='server/src/generate_once.ts'
+            declare ts_path="${generate_once}"
             case "${{ matrix.jsrt }}" in
               (deno)
                   declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write="${HOME}/.cache/" --allow-net)
@@ -89,6 +90,7 @@ jobs:
               (node)
                   declare -ar jsrt_cmd=(node)
                   declare -r ts_path='server/build/generate_once.js'
+                  generate_once="${ts_path}"
                 ;;
               (*) declare -ar jsrt_cmd=(false) ;;
             esac
@@ -112,7 +114,7 @@ jobs:
 
           # expect this to fail, but just make sure that the plugin is invoked
           {
-            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=server/build/generate_once.js;prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
+            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=${generate_once};prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
 
