@@ -65,11 +65,15 @@ jobs:
           node-version: "20" # minimum supported version
       - name: Install and build server dependencies
         run: |
+          set -e
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
             deno install --frozen --allow-scripts=npm:canvas
           else
-            npm ci && npx tsc
+            npm ci
+            npm audit
+            npm audit signatures
+            npx tsc
           fi
       - name: Install plugin
         run: |
@@ -80,11 +84,13 @@ jobs:
         run: |
           exit_code=0
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              echo "script version: $(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports server/src/generate_once.js --version)"
-              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
+              generate_once='server/src/generate_once.ts'
+              echo "script version: $(deno run --allow-read="${HOME}" --allow-env --allow-ffi=./server/node_modules/.deno "${generate_once}" --version)"
+              script_output=$(deno run --allow-read="${HOME}" --allow-write="${HOME}/.cache" --allow-env --allow-ffi=./server/node_modules/.deno --allow-net "${generate_once}" | tail -n 1)
           else
-              echo "script version: $(node server/build/generate_once.js --version)"
-              script_output=$(node server/build/generate_once.js | tail -n 1)
+              generate_once='server/build/generate_once.js'
+              echo "script version: $(node "${generate_once}" --version)"
+              script_output=$(node "${generate_once}" | tail -n 1)
           fi
 
           # check that the script is returning a POT
@@ -102,7 +108,7 @@ jobs:
 
           # expect this to fail, but just make sure that the plugin is invoked
           {
-            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=server/build/generate_once.js;prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
+            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=${generate_once};prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
 
@@ -187,7 +193,7 @@ jobs:
           if [ "${{ matrix.run }}" = "native" ]; then
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               (cd server && deno install --frozen --allow-scripts=npm:canvas)
-              deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
+              deno run --allow-env --allow-ffi=./server/node_modules/.deno/ --allow-net --allow-read=. server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
               node server/build/main.js --port "${{ env.PORT }}" > server.log 2>&1 &
@@ -200,7 +206,7 @@ jobs:
           echo "Waiting for server to be up..."
           PING_RESP=$(timeout ${{ env.TIMEOUT }} bash -c "ping ${{ env.INTERVAL }}") || \
             (echo "::error title=Timeout reached,file=server/src/main.ts::\
-          Timeout reached before the server is up." && exit 1)
+          Timeout reached before the server is up." && cat server.log || docker logs bgutil-provider ; exit 1)
 
           echo "::group::Response from HTTP server"
           if echo "$PING_RESP" | jq -e . >/dev/null 2>&1; then
@@ -240,7 +246,7 @@ jobs:
           else
             docker stop bgutil-provider
             echo "::group::Logs from ${{ matrix.run }} HTTP server"
-            docker logs bgutil-provider
+            docker logs -t bgutil-provider
           fi
           echo "::endgroup::"
 
