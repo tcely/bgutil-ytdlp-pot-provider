@@ -6,11 +6,13 @@ USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+ENV NPM_CONFIG_FUND=false \
+    NPM_CONFIG_PROGRESS=false
 RUN npm ci --omit=dev
 
 FROM shared AS build
 
-RUN npm ci
+RUN npm ci && npm audit
 
 COPY tsconfig.json ./
 COPY src/ src/
