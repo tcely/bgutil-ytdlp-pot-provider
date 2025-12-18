@@ -17,9 +17,13 @@ COPY src/ src/
 
 RUN npx tsc
 
+USER root
+RUN apt-get update && apt-get install -y tini
+
 FROM shared AS server
 
+COPY --from=build /usr/bin/tini-static /tini
 COPY --from=build /app/build /app/build
 
 EXPOSE 4416
-ENTRYPOINT ["node", "build/main.js"]
+ENTRYPOINT ["/tini", "--", "node", "build/main.js"]
