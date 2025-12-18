@@ -76,9 +76,12 @@ jobs:
             npx tsc
           fi
       - name: Install plugin
+        shell: bash
         run: |
-          mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
-          cp -r plugin/ ~/yt-dlp-plugins/
+          PLUGIN_DIR=~/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+          mkdir -v -p "${PLUGIN_DIR}"
+          echo "Installing plugin to ${PLUGIN_DIR}"
+          cp -v -r plugin/* "${PLUGIN_DIR}/"
       - name: Test script method
         shell: bash
         run: |
@@ -157,9 +160,12 @@ jobs:
       - name: Download yt-dlp
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
       - name: Install plugin
+        shell: bash
         run: |
-          mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
-          cp -r plugin/ ~/yt-dlp-plugins/
+          PLUGIN_DIR=~/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+          mkdir -v -p "${PLUGIN_DIR}"
+          echo "Installing plugin to ${PLUGIN_DIR}"
+          cp -v -r plugin/* "${PLUGIN_DIR}/"
       - name: Install Deno
         uses: denoland/setup-deno@v2
         if: matrix.run == 'native' && matrix.jsrt == 'deno'
