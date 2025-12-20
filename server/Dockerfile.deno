@@ -11,7 +11,7 @@ RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
 USER deno
 WORKDIR /app
 
-COPY deno.lock package.json tsconfig.json ./
+COPY deno.lock package.json package-lock.json tsconfig.json ./
 COPY src/ src/
 COPY types/ types/
 
@@ -19,17 +19,19 @@ WORKDIR /app/cache
 ENV DENO_DIR=/app/cache/deno
 WORKDIR /app/build
 
-COPY --chown=deno:deno deno.lock package.json tsconfig.json ./
+COPY --chown=deno:deno deno.lock package.json package-lock.json tsconfig.json ./
 COPY --chown=deno:deno src/ src/
 COPY --chown=deno:deno types/ types/
 
 ENV DENO_USE_CGROUPS=true
 ARG DENO_INSTALL_FROZEN
-RUN deno install --frozen="${DENO_INSTALL_FROZEN}" --node-modules-dir=manual --allow-scripts=npm:canvas
+RUN if [ "true" != "${DENO_INSTALL_FROZEN}" ]; then rm -v deno.lock ; else rm -v package-lock.json ../package-lock.json ; fi ; \
+    deno install --frozen="${DENO_INSTALL_FROZEN}" --node-modules-dir=manual --allow-scripts=npm:canvas
 ARG DENO_OUTDATED_UPDATE
 RUN if [ "false" != "${DENO_OUTDATED_UPDATE}" ]; then deno outdated --update ${DENO_OUTDATED_UPDATE} ; else deno outdated ; fi
 RUN deno compile --output=/app/server --cached-only --node-modules-dir=manual --allow-env --allow-ffi=./node_modules/.deno/ --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
-RUN for p in ../*.lock ../*.json ../*.jsonc ; do if [ -f "${p}" ]; then \
+RUN sed -i -e '2s/"[^4]",/"4",/' deno.lock; \
+    for p in ../*.lock ../*.json ../*.jsonc ; do if [ -f "${p}" ]; then \
         diff -su "${p}" "${p#.}" 2>&1 | tee ".diff.${p#../}" ; \
     fi ; done ; unset -v p ;
 
@@ -45,7 +47,7 @@ WORKDIR /app
 COPY --from=build --chown=nonroot:nonroot /app/src /app/src
 COPY --from=build --chown=nonroot:nonroot /app/types /app/types
 COPY --from=build --chown=nonroot:nonroot /app/build/.diff.* ./
-COPY --from=build --chown=nonroot:nonroot /app/build/deno.lock /app/build/package.json /app/build/tsconfig.json ./
+COPY --from=build --chown=nonroot:nonroot /app/build/deno.lock /app/build/package*.json /app/build/tsconfig.json ./
 
 EXPOSE 4416
 ENV DENO_NO_UPDATE_CHECK=true DENO_USE_CGROUPS=true
