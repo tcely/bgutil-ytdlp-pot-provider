@@ -8,6 +8,9 @@ FROM denoland/deno:debian AS build
 # The HOME directory wasn't created in the base image
 RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
 
+# Needed for ldd to debug canvas.node issues
+##RUN apt-get update && apt-get install -y bash-static && apt-get clean
+
 USER deno
 WORKDIR /app
 
@@ -33,13 +36,22 @@ RUN deno compile --output=/app/server --cached-only --node-modules-dir=manual --
 RUN sed -i -e '2s/"[^4]",/"4",/' deno.lock; \
     for p in ../*.lock ../*.json ../*.jsonc ; do if [ -f "${p}" ]; then \
         diff -su "${p}" "${p#.}" 2>&1 | tee ".diff.${p#../}" ; \
-    fi ; done ; unset -v p ;
+    fi ; done ; unset -v p ; \
+    printf > canvas.node.conf -- '%s\n' '/app/canvas/Release' ;
 
 FROM gcr.io/distroless/cc-debian13:debug AS server
 SHELL ["/busybox/busybox", "sh", "-c"]
 
 COPY --from=build --chown=root:root /tini /tini
-COPY --from=build --chown=root:root /app/server /usr/bin/server
+##COPY --from=build --chown=root:root /usr/bin/bash-static /bin/bash
+##COPY --from=build --chown=root:root /app/server /usr/bin/ldd /usr/sbin/ldconfig /usr/bin/
+COPY --from=build --chown=root:root /app/server /usr/sbin/ldconfig /usr/bin/
+COPY --from=build --chown=root:root /etc/ld.so.conf /etc/ld.so.conf
+COPY --from=build --chown=root:root /app/build/canvas.node.conf /etc/ld.so.conf.d/canvas.node.conf
+COPY --from=build --chown=root:root /app/build/node_modules/canvas/build/Release /app/canvas/Release
+COPY --from=build --chown=root:root /usr/lib/x86_64-linux-gnu/libuuid.so.1 /app/canvas/Release/
+
+RUN ldconfig --verbose
 
 USER nonroot
 WORKDIR /app
