@@ -16,6 +16,7 @@ RUN npm ci && npm audit
 
 COPY tsconfig.json ./
 COPY src/ src/
+COPY types/ types/
 
 RUN npx tsc
 
