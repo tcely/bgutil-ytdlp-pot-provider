@@ -21,12 +21,14 @@ COPY types/ types/
 RUN npx tsc
 
 USER root
-RUN apt-get update && apt-get install -y tini
+RUN apt-get update && apt-get install -y busybox-static tini
 
 FROM shared AS server
 
+COPY --from=build /usr/bin/busybox /busybox/busybox
 COPY --from=build /usr/bin/tini-static /tini
 COPY --from=build /app/build /app/build
 
 EXPOSE 4416
+HEALTHCHECK --interval=1m --timeout=10s --start-period=3m CMD ["/busybox/busybox", "wget", "-q", "-Y", "off", "-S", "-O", "-", "--", "http://127.0.0.1:4416/ping"]
 ENTRYPOINT ["/tini", "--", "node", "build/main.js"]
