@@ -37,6 +37,13 @@ RUN sed -i -e '2s/"[^4]",/"4",/' deno.lock; \
     for p in ../*.lock ../*.json ../*.jsonc ; do if [ -f "${p}" ]; then \
         diff -su "${p}" "${p#.}" 2>&1 | tee ".diff.${p#../}" ; \
     fi ; done ; unset -v p ; \
+    mkdir -v canvas && \
+    cp -vat canvas/ node_modules/canvas/build/Release && \
+    cp -vHpt canvas/Release/ \
+        "$(ldconfig -p | awk '/\/libuuid\.so\./ {print $NF;}')" && \
+    rm -v -f canvas/Release/canvas.node \
+        canvas/Release/libstdc++.so.6 canvas/Release/libz.so.1 && \
+    chmod -c 00755 canvas/Release/lib*.so.* ; \
     printf > canvas.node.conf -- '%s\n' '/app/canvas/Release' ;
 
 FROM gcr.io/distroless/cc-debian13:debug AS server
@@ -48,8 +55,7 @@ COPY --from=build --chown=root:root /tini /tini
 COPY --from=build --chown=root:root /app/server /usr/sbin/ldconfig /usr/bin/
 COPY --from=build --chown=root:root /etc/ld.so.conf /etc/ld.so.conf
 COPY --from=build --chown=root:root /app/build/canvas.node.conf /etc/ld.so.conf.d/canvas.node.conf
-COPY --from=build --chown=root:root /app/build/node_modules/canvas/build/Release /app/canvas/Release
-COPY --from=build --chown=root:root /usr/lib/x86_64-linux-gnu/libuuid.so.1 /app/canvas/Release/
+COPY --from=build --chown=root:root /app/build/canvas/ /app/canvas/
 
 RUN ldconfig --verbose
 
