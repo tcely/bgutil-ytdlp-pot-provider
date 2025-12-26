@@ -87,8 +87,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            DENO_INSTALL_FROZEN=true
-            DENO_OUTDATED_UPDATE=
+            DENO_INSTALL_FROZEN=false
+            DENO_OUTDATED_UPDATE=false
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
