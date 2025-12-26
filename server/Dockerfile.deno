@@ -1,14 +1,86 @@
-FROM denoland/deno:alpine-2.5.6
-EXPOSE 4416
-RUN mkdir /app
-RUN chown deno /app
+# syntax=docker/dockerfile:1
+# check=error=true
+
+ARG DENO_INSTALL_FROZEN=true DENO_OUTDATED_UPDATE=false
+
+FROM denoland/deno:debian AS build
+
+# The HOME directory wasn't created in the base image
+RUN userdel deno && useradd --uid 1993 --user-group --create-home deno
+
+# Needed for ldd to debug canvas.node issues
+##RUN apt-get update && apt-get install -y bash-static && apt-get clean
+
 USER deno
 WORKDIR /app
 
-COPY tsconfig.json package.json deno.lock ./
+COPY deno.lock package.json package-lock.json tsconfig.json ./
 COPY src/ src/
-RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
-RUN deno cache src/main.ts
+COPY types/ types/
 
-# deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
-ENTRYPOINT ["deno", "run", "--allow-env", "--allow-ffi", "--allow-net", "--allow-read=/app", "--unstable-sloppy-imports", "src/main.ts"]
+WORKDIR /app/cache
+ENV DENO_DIR=/app/cache/deno
+WORKDIR /app/build
+
+COPY --chown=deno:deno deno.lock package.json package-lock.json tsconfig.json ./
+COPY --chown=deno:deno src/ src/
+COPY --chown=deno:deno types/ types/
+
+ENV DENO_USE_CGROUPS=true
+ARG DENO_INSTALL_FROZEN
+RUN if [ "true" != "${DENO_INSTALL_FROZEN}" ]; then rm -v deno.lock ; else rm -v package-lock.json ../package-lock.json ; fi ; \
+    deno install --frozen="${DENO_INSTALL_FROZEN}" --node-modules-dir=manual --allow-scripts=npm:canvas
+ARG DENO_OUTDATED_UPDATE
+RUN if [ "false" != "${DENO_OUTDATED_UPDATE}" ]; then deno outdated --update ${DENO_OUTDATED_UPDATE} ; else deno outdated ; fi
+RUN deno compile --output=/app/server --cached-only --node-modules-dir=manual --allow-env --allow-ffi=./node_modules/.deno/ --allow-ffi=/tmp/deno-compile-server/node_modules/.deno/ --allow-net src/main.ts
+RUN sed -i -e '2s/"[^4]",/"4",/' deno.lock; \
+    for p in ../*.lock ../*.json ../*.jsonc ; do if [ -f "${p}" ]; then \
+        diff -su "${p}" "${p#.}" 2>&1 | tee ".diff.${p#../}" ; \
+    fi ; done ; unset -v p ; \
+    mkdir -v canvas && \
+    cp -vat canvas/ node_modules/canvas/build/Release && \
+    cp -vHpt canvas/Release/ \
+        "$(ldconfig -p | awk '/\/libuuid\.so\./ {print $NF;}')" && \
+    rm -v -f canvas/Release/canvas.node \
+        canvas/Release/libstdc++.so.6 canvas/Release/libz.so.1 && \
+    chmod -c 00755 canvas/Release/lib*.so.* ; \
+    printf > canvas.node.conf -- '%s\n' '/app/canvas/Release' ;
+
+FROM gcr.io/distroless/cc-debian13:debug AS server
+SHELL ["/busybox/busybox", "sh", "-c"]
+
+COPY --from=build --chown=root:root /tini /tini
+##COPY --from=build --chown=root:root /usr/bin/bash-static /bin/bash
+##COPY --from=build --chown=root:root /app/server /usr/bin/ldd /usr/sbin/ldconfig /usr/bin/
+COPY --from=build --chown=root:root /app/server /usr/sbin/ldconfig /usr/bin/
+COPY --from=build --chown=root:root /etc/ld.so.conf /etc/ld.so.conf
+COPY --from=build --chown=root:root /app/build/canvas.node.conf /etc/ld.so.conf.d/canvas.node.conf
+COPY --from=build --chown=root:root /app/build/canvas/ /app/canvas/
+
+RUN ldconfig --verbose
+
+USER nonroot
+WORKDIR /app
+
+COPY --from=build --chown=nonroot:nonroot /app/src /app/src
+COPY --from=build --chown=nonroot:nonroot /app/types /app/types
+COPY --from=build --chown=nonroot:nonroot /app/build/.diff.* ./
+COPY --from=build --chown=nonroot:nonroot /app/build/deno.lock /app/build/package*.json /app/build/tsconfig.json ./
+
+EXPOSE 4416
+ENV DENO_NO_UPDATE_CHECK=true DENO_USE_CGROUPS=true
+HEALTHCHECK --interval=1m --timeout=10s --start-period=3m CMD ["/busybox/busybox", "wget", "-q", "-Y", "off", "-S", "-O", "-", "--", "http://127.0.0.1:4416/ping"]
+ENTRYPOINT ["/tini", "--", "/usr/bin/server"]
+# To run with deno instead of the compiled binary, add the deno binary.
+# COPY --from=denoland/deno:bin --chown=root:root /deno /usr/bin/deno
+#
+# It could also be downloaded with wget and extracted with unzip within
+# the container since busybox provides both of those commands.
+# Add those steps in your own Dockerfile based on this image.
+#
+# After deno is available, the server can be run either of these ways:
+# deno run --frozen --no-code-cache --node-modules-dir=auto --allow-env --allow-ffi=./node_modules/.deno/ --allow-net --allow-scripts=npm:canvas src/main.ts
+#
+# deno install --frozen --node-modules-dir=manual --allow-scripts=npm:canvas
+# deno clean
+# deno run --cached-only --no-code-cache --node-modules-dir=manual --allow-env --allow-ffi=./node_modules/.deno/ --allow-net src/main.ts

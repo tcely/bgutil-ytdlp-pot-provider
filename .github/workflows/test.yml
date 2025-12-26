@@ -69,13 +69,21 @@ jobs:
           cd server
           case "${{ matrix.jsrt }}" in
             (deno) deno install --frozen --allow-scripts=npm:canvas ;;
-            (node) npm ci && npx tsc ;;
+            (node)
+                npm ci ;
+                npm audit ;
+                npm audit signatures ;
+                npx tsc ;
+                ;;
             (*) echo 1>&2 'Unsupported jsrt' && false ;;
           esac
       - name: Install plugin
+        shell: bash
         run: |
-          mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
-          cp -r plugin/ ~/yt-dlp-plugins/
+          PLUGIN_DIR=~/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+          mkdir -v -p "${PLUGIN_DIR}"
+          echo "Installing plugin to ${PLUGIN_DIR}"
+          cp -v -r plugin/* "${PLUGIN_DIR}/"
       - name: Test script method
         shell: bash
         run: |
@@ -85,7 +93,7 @@ jobs:
             declare ts_path="${generate_once}"
             case "${{ matrix.jsrt }}" in
               (deno)
-                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write="${HOME}/.cache/" --allow-net)
+                  declare -ar jsrt_cmd=(deno run --allow-read="${HOME}" --allow-env --allow-ffi=./server/node_modules/.deno --allow-write="${HOME}/.cache" --allow-net)
                 ;;
               (node)
                   declare -ar jsrt_cmd=(node)
@@ -114,7 +122,7 @@ jobs:
 
           # expect this to fail, but just make sure that the plugin is invoked
           {
-            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=${generate_once};prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
+            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:server_home=server;prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
 
@@ -163,9 +171,12 @@ jobs:
       - name: Download yt-dlp
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
       - name: Install plugin
+        shell: bash
         run: |
-          mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
-          cp -r plugin/ ~/yt-dlp-plugins/
+          PLUGIN_DIR=~/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+          mkdir -v -p "${PLUGIN_DIR}"
+          echo "Installing plugin to ${PLUGIN_DIR}"
+          cp -v -r plugin/* "${PLUGIN_DIR}/"
       - name: Install Deno
         uses: denoland/setup-deno@v2
         if: matrix.run == 'native' && matrix.jsrt == 'deno'
@@ -199,7 +210,7 @@ jobs:
           if [ "${{ matrix.run }}" = "native" ]; then
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               (cd server && deno install --frozen --allow-scripts=npm:canvas)
-              deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
+              deno run --allow-env --allow-ffi=./server/node_modules/.deno/ --allow-net --allow-read=. server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
               node server/build/main.js --port "${{ env.PORT }}" > server.log 2>&1 &
@@ -212,7 +223,7 @@ jobs:
           echo "Waiting for server to be up..."
           PING_RESP=$(timeout ${{ env.TIMEOUT }} bash -c "ping ${{ env.INTERVAL }}") || \
             (echo "::error title=Timeout reached,file=server/src/main.ts::\
-          Timeout reached before the server is up." && exit 1)
+          Timeout reached before the server is up." && cat server.log || docker logs bgutil-provider ; exit 1)
 
           echo "::group::Response from HTTP server"
           if echo "$PING_RESP" | jq -e . >/dev/null 2>&1; then
@@ -252,7 +263,7 @@ jobs:
           else
             docker stop bgutil-provider
             echo "::group::Logs from ${{ matrix.run }} HTTP server"
-            docker logs bgutil-provider
+            docker logs -t bgutil-provider
           fi
           echo "::endgroup::"
 
