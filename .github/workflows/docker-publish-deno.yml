@@ -81,6 +81,7 @@ jobs:
           file: ./server/Dockerfile.deno
           platforms: linux/arm64,linux/amd64
           load: false # cannot use true with manifest lists
+          pull: true
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
