@@ -67,14 +67,16 @@ jobs:
         run: |
           set -e
           cd server
-          if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen --allow-scripts=npm:canvas
-          else
-            npm ci
-            npm audit
-            npm audit signatures
-            npx tsc
-          fi
+          case "${{ matrix.jsrt }}" in
+            (deno) deno install --frozen --allow-scripts=npm:canvas ;;
+            (node)
+                npm ci ;
+                npm audit ;
+                npm audit signatures ;
+                npx tsc ;
+                ;;
+            (*) echo 1>&2 'Unsupported jsrt' && false ;;
+          esac
       - name: Install plugin
         shell: bash
         run: |
@@ -86,15 +88,24 @@ jobs:
         shell: bash
         run: |
           exit_code=0
-          if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              generate_once='server/src/generate_once.ts'
-              echo "script version: $(deno run --allow-read="${HOME}" --allow-env --allow-ffi=./server/node_modules/.deno "${generate_once}" --version)"
-              script_output=$(deno run --allow-read="${HOME}" --allow-write="${HOME}/.cache" --allow-env --allow-ffi=./server/node_modules/.deno --allow-net "${generate_once}" | tail -n 1)
-          else
-              generate_once='server/build/generate_once.js'
-              echo "script version: $(node "${generate_once}" --version)"
-              script_output=$(node "${generate_once}" | tail -n 1)
-          fi
+          generate_once='server/src/generate_once.ts'
+          gen_once() {
+            declare ts_path="${generate_once}"
+            case "${{ matrix.jsrt }}" in
+              (deno)
+                  declare -ar jsrt_cmd=(deno run --allow-read="${HOME}" --allow-env --allow-ffi=./server/node_modules/.deno --allow-write="${HOME}/.cache" --allow-net)
+                ;;
+              (node)
+                  declare -ar jsrt_cmd=(node)
+                  declare -r ts_path='server/build/generate_once.js'
+                  generate_once="${ts_path}"
+                ;;
+              (*) declare -ar jsrt_cmd=(false) ;;
+            esac
+            "${jsrt_cmd[@]}" -- "${ts_path}" "$@"
+          }
+          echo "script version: $(gen_once --version)"
+          script_output=$(gen_once | tail -n 1)
 
           # check that the script is returning a POT
           echo "::group::POT response from the script"
