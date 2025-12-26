@@ -1,4 +1,7 @@
-FROM node:20-slim AS build
+FROM node:25-slim AS build
+RUN mkdir /app
+RUN chown node /app
+USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -8,12 +11,15 @@ COPY tsconfig.json ./
 COPY src/ src/
 RUN npx tsc
 
-FROM node:20-slim
+FROM node:25-slim
+EXPOSE 4416
+RUN mkdir /app
+RUN chown node /app
+USER node
 WORKDIR /app
 
 COPY --from=build /app/build /app/build
-COPY --from=build /app/package.json /app/package.json
-COPY --from=build /app/package-lock.json /app/package-lock.json
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 ENTRYPOINT ["node", "build/main.js"]

@@ -1,18 +1,16 @@
 import { SessionManager, YoutubeSessionDataCaches } from "./session_manager.js";
 import { VERSION } from "./utils.js";
 import { Command } from "commander";
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Follow XDG Base Directory Specification: https://specifications.freedesktop.org/basedir-spec/latest/
 let cachedir;
 const homeDirectory = process.env.HOME || process.env.USERPROFILE;
-if ("XDG_CACHE_HOME" in process.env) {
-    cachedir = path.resolve(
-        process.env.XDG_CACHE_HOME || "",
-        "bgutil-ytdlp-pot-provider",
-    );
+const { XDG_CACHE_HOME } = process.env;
+if (XDG_CACHE_HOME !== undefined) {
+    cachedir = path.resolve(XDG_CACHE_HOME, "bgutil-ytdlp-pot-provider");
 } else if (homeDirectory) {
     cachedir = path.resolve(
         homeDirectory,
