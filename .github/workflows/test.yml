@@ -65,12 +65,13 @@ jobs:
           node-version: "20" # minimum supported version
       - name: Install and build server dependencies
         run: |
+          set -e
           cd server
-          if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen --allow-scripts=npm:canvas
-          else
-            npm ci && npx tsc
-          fi
+          case "${{ matrix.jsrt }}" in
+            (deno) deno install --frozen --allow-scripts=npm:canvas ;;
+            (node) npm ci && npx tsc ;;
+            (*) echo 1>&2 'Unsupported jsrt' && false ;;
+          esac
       - name: Install plugin
         run: |
           mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
@@ -79,13 +80,24 @@ jobs:
         shell: bash
         run: |
           exit_code=0
-          if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              echo "script version: $(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports server/src/generate_once.js --version)"
-              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
-          else
-              echo "script version: $(node server/build/generate_once.js --version)"
-              script_output=$(node server/build/generate_once.js | tail -n 1)
-          fi
+          generate_once='server/src/generate_once.ts'
+          gen_once() {
+            declare ts_path="${generate_once}"
+            case "${{ matrix.jsrt }}" in
+              (deno)
+                  declare -ar jsrt_cmd=(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports --allow-write="${HOME}/.cache/" --allow-net)
+                ;;
+              (node)
+                  declare -ar jsrt_cmd=(node)
+                  declare -r ts_path='server/build/generate_once.js'
+                  generate_once="${ts_path}"
+                ;;
+              (*) declare -ar jsrt_cmd=(false) ;;
+            esac
+            "${jsrt_cmd[@]}" -- "${ts_path}" "$@"
+          }
+          echo "script version: $(gen_once --version)"
+          script_output=$(gen_once | tail -n 1)
 
           # check that the script is returning a POT
           echo "::group::POT response from the script"
@@ -102,7 +114,7 @@ jobs:
 
           # expect this to fail, but just make sure that the plugin is invoked
           {
-            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=server/build/generate_once.js;prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
+            script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args "youtubepot-bgutilscript:script_path=${generate_once};prefer_node=${{ matrix.jsrt == 'node' }}" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
 
