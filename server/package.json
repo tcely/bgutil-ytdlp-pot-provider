@@ -27,7 +27,7 @@
         "express": "^5.1.0",
         "jsdom": "^26.1.0",
         "proxy-agent": "^6.5.0",
-        "youtubei.js": "^15.0.1"
+        "youtubei.js": "^16.0.1"
     },
     "devDependencies": {
         "@commander-js/extra-typings": "^14.0.0",
