@@ -1,4 +1,3 @@
-import axios, { AxiosRequestConfig } from "axios";
 import {
     BG,
     BgConfig,
@@ -13,7 +12,7 @@ import { Agent } from "https";
 import { ProxyAgent } from "proxy-agent";
 import { JSDOM } from "jsdom";
 import { Innertube, Context as InnertubeContext } from "youtubei.js";
-import { strerror } from "./utils.js";
+import { strerror } from "./utils.ts";
 
 interface YoutubeSessionData {
     poToken: string;
@@ -445,32 +444,30 @@ export class SessionManager {
         intervalMs: number,
     ): FetchFunction {
         const { logger } = this;
-        return async (url: any, options: any): Promise<any> => {
+        const dispatcher = proxySpec.asDispatcher(logger);
+        return async (url: RequestInfo | URL, options?: RequestInit): Promise<any> => {
             const method = (options?.method || "GET").toUpperCase();
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
-                    const axiosOpt: AxiosRequestConfig = {
-                        headers: options?.headers,
-                        params: options?.params,
-                        httpsAgent: proxySpec.asDispatcher(logger),
-                    };
-                    const response = await (method === "GET"
-                        ? axios.get(url, axiosOpt)
-                        : axios.post(url, options?.body, axiosOpt));
+                    const response = await fetch(url, {
+                        ...options,
+                        dispatcher,
+                    });
+                    // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
+                    if (!response.ok && attempts < maxRetries) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
 
                     return {
-                        ok: response.status >= 200 && response.status < 300,
+                        ok: response.ok,
                         status: response.status,
-                        json: async () => response.data,
-                        text: async () =>
-                            typeof response.data === "string"
-                                ? response.data
-                                : JSON.stringify(response.data),
+                        json: () => response.json(),
+                        text: () => response.text(),
                     };
                 } catch (e) {
                     if (attempts >= maxRetries)
                         throw new Error(
-                            `Error reaching ${method} ${url}: All ${attempts} retries failed.`,
+                            `Error reaching ${method} ${url.toString()}: All ${attempts} retries failed.`,
                             { cause: e },
                         );
                     await new Promise((resolve) =>
