@@ -5,7 +5,7 @@
         "allowJs": true,
         "target": "es2022",
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "nodenext",
         "baseUrl": ".",
         "rootDir": "src",
         "strictBindCallApply": true,
@@ -20,6 +20,7 @@
         "skipLibCheck": true,
         "noUncheckedIndexedAccess": true,
         "rewriteRelativeImportExtensions": true,
+        "allowImportingTsExtensions": true,
         "paths": {
             "commander": ["./types/commander.d.ts"]
         }
