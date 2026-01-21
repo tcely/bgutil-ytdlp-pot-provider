@@ -93,8 +93,6 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_path(self) -> str | None:
         return self._jsrt_path_impl()
 
-    _HOMEDIR = os.path.expanduser('~')
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_script = functools.cache(self._check_script_impl)
@@ -110,18 +108,18 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     @functools.cached_property
     def _server_home(self) -> str:
         # TODO: document this
+        resolve_path = lambda *ps: os.path.abspath(
+            os.path.expanduser(os.path.expandvars(os.path.join(*ps))))
         if server_home := self._base_config_arg('server_home'):
-            return os.path.abspath(server_home)
+            return resolve_path(server_home)
 
         if script_path := self._base_config_arg('script_path'):
-            return os.path.abspath(os.path.join(
-                os.path.expandvars(script_path), os.pardir, os.pardir))
+            return resolve_path(script_path, os.pardir, os.pardir)
 
         # default if no arg was passed
-        default_home = os.path.join(
-            self._HOMEDIR, 'bgutil-ytdlp-pot-provider', 'server')
+        default_home = resolve_path('~', 'bgutil-ytdlp-pot-provider', 'server')
         self.logger.debug(
-            f'No script path passed, defaulting to {default_home}')
+            f'No server_home or script_path passed, defaulting to {default_home}')
         return default_home
 
     @functools.cached_property
