@@ -19,6 +19,8 @@
         "sourceMap": true,
         "skipLibCheck": true,
         "noUncheckedIndexedAccess": true,
+        "rewriteRelativeImportExtensions": true,
+        "allowImportingTsExtensions": true,
         "paths": {
             "commander": ["./types/commander.d.ts"]
         }
