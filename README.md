@@ -96,8 +96,8 @@ python3 -m pip install -U bgutil-ytdlp-pot-provider
 
 #### Manual:
 
-1. Download the latest release zip from [the latest release](https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/latest).
-2. Install it by placing the zip into one of the yt-dlp [plugin folders](https://github.com/yt-dlp/yt-dlp#installing-plugins).
+1. Download [`bgutil-ytdlp-pot-provider.zip`](https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/latest/download/bgutil-ytdlp-pot-provider.zip) from [the latest release](https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/latest).
+2. Install it by placing the zip into one of the [yt-dlp plugin folders](https://github.com/yt-dlp/yt-dlp#installing-plugins).
 
 ## Usage
 
@@ -121,7 +121,7 @@ If the tokens are no longer working, passing `disable_innertube=1` to yt-dlp res
 --extractor-args "youtubepot-bgutilhttp:base_url=http://127.0.0.1:8080;disable_innertube=1"
 ```
 
-Note that when you pass multiple extractor arguments to one provider or extractor, they are to be separated by semicolons(`;`) as shown above. Multiple `--extractor-args` will **NOT** work for the same provier/extractor.
+Note that when you pass multiple extractor arguments to one provider or extractor, they are to be separated by semicolons(`;`) as shown above.
 
 ---
 
