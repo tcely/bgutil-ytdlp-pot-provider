@@ -4,7 +4,7 @@
         "outDir": "./build",
         "allowJs": true,
         "target": "es2022",
-        "module": "esnext",
+        "module": "nodenext",
         "moduleResolution": "nodenext",
         "baseUrl": ".",
         "rootDir": "src",
