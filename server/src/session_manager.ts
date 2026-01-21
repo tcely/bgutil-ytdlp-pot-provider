@@ -445,7 +445,10 @@ export class SessionManager {
     ): FetchFunction {
         const { logger } = this;
         const dispatcher = proxySpec.asDispatcher(logger);
-        return async (url: RequestInfo | URL, options?: RequestInit): Promise<any> => {
+        return async (
+            url: RequestInfo | URL,
+            options?: RequestInit,
+        ): Promise<any> => {
             const method = (options?.method || "GET").toUpperCase();
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
