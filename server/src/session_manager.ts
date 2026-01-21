@@ -446,14 +446,14 @@ export class SessionManager {
         const { logger } = this;
         const dispatcher = proxySpec.asDispatcher(logger);
         return async (
-            url: RequestInfo | URL,
-            options?: RequestInit,
-        ): Promise<any> => {
-            const method = (options?.method || "GET").toUpperCase();
+            input: RequestInfo | URL,
+            init?: RequestInit,
+        ): Promise<Response> => {
+            const method = (init?.method || "GET").toUpperCase();
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
-                    const response = await fetch(url, {
-                        ...options,
+                    const response = await fetch(input, {
+                        ...init,
                         dispatcher,
                     });
                     // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
@@ -470,7 +470,7 @@ export class SessionManager {
                 } catch (e) {
                     if (attempts >= maxRetries)
                         throw new Error(
-                            `Error reaching ${method} ${url.toString()}: All ${attempts} retries failed.`,
+                            `Error reaching ${method} ${input.toString()}: All ${attempts} retries failed.`,
                             { cause: e },
                         );
                     await new Promise((resolve) =>
