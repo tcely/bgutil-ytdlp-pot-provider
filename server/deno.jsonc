@@ -1,0 +1,13 @@
+{
+    "imports": {
+        "bgutils-js": "npm:bgutils-js@^3.2.0",
+        "commander": "npm:commander@^14.0.2",
+        "fs": "node:fs",
+        "https": "node:https",
+        "jsdom": "npm:jsdom@^27.4.0",
+        "path": "node:path",
+        "proxy-agent": "npm:proxy-agent@^6.5.0",
+        "url": "node:url",
+        "youtubei.js": "npm:youtubei.js@^16.0.1"
+    }
+}
