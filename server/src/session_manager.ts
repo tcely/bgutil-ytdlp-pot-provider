@@ -455,7 +455,7 @@ export class SessionManager {
                     const response = await fetch(input, {
                         ...init,
                         dispatcher,
-                    } as unknown);
+                    } as any);
                     // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
                     if (!response.ok && attempts < maxRetries) {
                         throw new Error(`HTTP ${response.status}`);
