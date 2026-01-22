@@ -450,10 +450,16 @@ export class SessionManager {
             init?: RequestInit,
         ): Promise<Response> => {
             const method = (init?.method || "GET").toUpperCase();
+            const headers = new Headers(init?.headers);
+            if (init?.body && !headers.has("Content-Type")) {
+                headers.set("Content-Type", "application/json");
+            }
+
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
                     const response = await fetch(input, {
                         ...init,
+                        headers,
                         dispatcher,
                     } as any);
                     // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
