@@ -25,6 +25,7 @@ T = TypeVar('T')
 
 
 class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
+    _GET_SCRIPT_VSN_TIMEOUT = 15
     _SCRIPT_BASENAME: str
     _JSRT_NAME: str
     _JSRT_EXEC: str
@@ -53,7 +54,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         try:
             stdout, stderr, returncode = Popen.run(
                 [jsrt_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=int(self._GET_SERVER_VSN_TIMEOUT))
+                timeout=5)
         except subprocess.TimeoutExpired:
             report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
@@ -150,7 +151,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             return False
         stdout, stderr, returncode = Popen.run(
             [self._jsrt_path, *self._jsrt_args(), script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            timeout=int(self._GET_SERVER_VSN_TIMEOUT))
+            timeout=self._GET_SCRIPT_VSN_TIMEOUT)
         if returncode:
             self.logger.warning(
                 f'Failed to check script version. '
