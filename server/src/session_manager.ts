@@ -460,7 +460,8 @@ export class SessionManager {
                     const response = await fetch(input, {
                         ...init,
                         headers,
-                        dispatcher,
+                        // Only pass dispatcher if it has the required dispatch function
+                        ...("function" === typeof dispatcher?.dispatch ? { dispatcher } : {}),
                     } as any);
                     // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
                     if (!response.ok && attempts < maxRetries) {
