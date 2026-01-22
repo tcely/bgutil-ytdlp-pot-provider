@@ -448,25 +448,20 @@ export class SessionManager {
         return async (
             input: RequestInfo | URL,
             init?: RequestInit,
-        ): Promise<unknown> => {
+        ): Promise<Request> => {
             const method = (init?.method || "GET").toUpperCase();
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
                     const response = await fetch(input, {
                         ...init,
                         dispatcher,
-                    });
+                    } as unknown);
                     // Fetch does not throw on 4xx/5xx errors, so we handle that in the retry logic
                     if (!response.ok && attempts < maxRetries) {
                         throw new Error(`HTTP ${response.status}`);
                     }
 
-                    return {
-                        ok: response.ok,
-                        status: response.status,
-                        json: () => response.json(),
-                        text: () => response.text(),
-                    };
+                    return response;
                 } catch (e) {
                     if (attempts >= maxRetries)
                         throw new Error(
@@ -478,6 +473,7 @@ export class SessionManager {
                     );
                 }
             }
+            throw new Error("Retry loop exhausted");
         };
     }
 
