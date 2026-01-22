@@ -448,7 +448,7 @@ export class SessionManager {
         return async (
             input: RequestInfo | URL,
             init?: RequestInit,
-        ): Promise<Request> => {
+        ): Promise<Response> => {
             const method = (init?.method || "GET").toUpperCase();
             for (let attempts = 1; attempts <= maxRetries; attempts++) {
                 try {
