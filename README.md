@@ -249,6 +249,8 @@ def update_gyp_config():
   except Exception as e:
     print(f'Error: {e}')
 
+# Press Enter again if the prompt is still indented
+
 ```
 
 3. When you are ready, and there were no errors, call that function with:
