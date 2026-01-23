@@ -163,7 +163,7 @@ For provider versions >=1.2.0, you may have issues while installing the `canvas`
 pkg install libvips xorgproto
 ```
 
-2. Create the function to adjust `~/.gyp/include.gypi` for us.
+2. Create the shell function to adjust `~/.gyp/include.gypi` for us.
 ```shell
 update_gyp_config() (
   set -eu
@@ -206,4 +206,59 @@ update_gyp_config() (
 3. Call the newly created `update_gyp_config` function to actually adjust the `~/.gyp/include.gypi` file.
 ```shell
 update_gyp_config
+```
+
+Alternatively, you can handle the modification with Python instead of using `sed` to perform text manipulation.
+
+1. Open the Python REPL:
+```shell
+python3
+```
+
+2. Define the Python function to adjust the file.
+```py
+import ast, shutil, tempfile, subprocess
+from pathlib import Path
+
+def update_gyp_config():
+  try:
+    g_dir = Path.home() / '.gyp'
+    g_dir.mkdir(parents=True, exist_ok=True)
+    target = g_dir / 'include.gypi'
+
+    with tempfile.TemporaryDirectory(dir=g_dir, prefix='tmp.') as t:
+      t_p = Path(t)
+      old, new = t_p / 'old', t_p / 'new'
+      
+      if target.exists() and 0 < target.stat().st_size:
+        shutil.copy2(target, old)
+        data = ast.literal_eval(old.read_text())
+        if 'android_ndk_path' in data.get('variables', {}):
+          print('No changes to apply.'); return
+        
+        data.setdefault('variables', {})['android_ndk_path'] = ''
+        new.write_text(repr(data))
+      else:
+        old.touch()
+        new.write_text("{'variables':{'android_ndk_path':''}}")
+
+      print('Status of changes:')
+      subprocess.run(['diff', '-su', old, new])
+      if 0 == subprocess.run(['mv', '-v', '-i', new, target]).returncode:
+        print('Changes applied.')
+  except Exception as e:
+    print(f'Error: {e}')
+
+# Press Enter again if the prompt is still indented
+
+```
+
+3. When you are ready, and there were no errors, call that function with:
+```py
+update_gyp_config()
+```
+
+4. Close the Python REPL and return to your shell with:
+```py
+exit()
 ```
