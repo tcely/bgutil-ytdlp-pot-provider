@@ -158,9 +158,52 @@ To check if the plugin was installed correctly, you should see the `bgutil` prov
 
 For provider versions >=1.2.0, you may have issues while installing the `canvas` dependency on Termux. The Termux environment is missing a `android_ndk_path` and two packages by default. Run the following commands to setup the dependencies correctly.
 
+1. Install the packages.
 ```shell
-mkdir -v -p ~/.gyp
-printf > ~/.gyp/include.gypi -- "{'variables':{'android_ndk_path':''}}\n"
-
 pkg install libvips xorgproto
+```
+
+2. Create the function to adjust `~/.gyp/include.gypi` for us.
+```shell
+update_gyp_config() (
+  set -eu
+  mkdir -p ~/.gyp
+  cd ~/.gyp
+  tmp_dir="$(mktemp -d ./tmp.XXXXXX)"
+  if [ -s include.gypi ]; then
+    cp -p include.gypi "${tmp_dir}/old"
+    cp -p "${tmp_dir}/old" "${tmp_dir}/new"
+    if ! grep -q 'android_ndk_path' "${tmp_dir}/new"; then
+      if grep -q "'variables':[[:space:]]*{" "${tmp_dir}/new"; then
+        sed "s/'variables':[[:space:]]*{/'variables':{'android_ndk_path':'',/" "${tmp_dir}/old" > "${tmp_dir}/new"
+      else
+        sed "1s/{/{'variables':{'android_ndk_path':''},/" "${tmp_dir}/old" > "${tmp_dir}/new"
+      fi
+    fi
+  else
+    printf > "${tmp_dir}/old" -- ''
+    printf > "${tmp_dir}/new" -- "{'variables':{'android_ndk_path':''}}\n"
+  fi
+  if cmp -s "${tmp_dir}/old" "${tmp_dir}/new"; then
+    printf 'No changes to apply.\n'
+    rm -rf "${tmp_dir}"
+  else
+    printf 'Status of changes for ~/.gyp/include.gypi:\n'
+    diff -su "${tmp_dir}/old" "${tmp_dir}/new" || true
+    if mv -v -i "${tmp_dir}/new" include.gypi; then
+      rm -rf "${tmp_dir}"
+    else
+      printf 'Changes not applied. Workspace preserved at: ~/.gyp/%s\n' "${tmp_dir#./}"
+    fi
+  fi
+  if ! [ -d "${tmp_dir}" ]; then
+    printf 'Cleanup complete.\n'
+  fi
+)
+
+```
+
+3. Call the newly created `update_gyp_config` function to actually adjust the `~/.gyp/include.gypi` file.
+```shell
+update_gyp_config
 ```
