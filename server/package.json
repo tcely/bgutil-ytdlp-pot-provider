@@ -23,7 +23,7 @@
         "bgutils-js": "^3.2.0",
         "body-parser": "^2.2.0",
         "canvas": "^3.1.1",
-        "commander": "github:tj/commander.js.git#develop",
+        "commander": "^14.0.2",
         "express": "^5.1.0",
         "jsdom": "^26.1.0",
         "proxy-agent": "^6.5.0",
@@ -42,8 +42,8 @@
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-prettier": "^5.5.3",
         "prettier": "3.6.2",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.8.3",
+        "swc-node": "^1.0.0",
+        "typescript": "^5.9.3",
         "typescript-eslint": "^8.38.0"
     }
 }
