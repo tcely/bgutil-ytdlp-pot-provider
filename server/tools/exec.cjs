@@ -51,7 +51,7 @@ function findLocalBin(startPath, toolName) {
         if (fs.existsSync(binPath)) return binPath;
         if (isWin && fs.existsSync(winBinPath)) return winBinPath;
 
-        if (current === root) break;
+        if (root === current) break;
         current = path.dirname(current);
     }
     return null;
