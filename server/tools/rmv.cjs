@@ -10,7 +10,7 @@ const dashIndex = rawArgs.indexOf("--");
 // Arguments before -- are flags; arguments after are always targets
 const flagArgs = -1 !== dashIndex
     ? rawArgs.slice(0, dashIndex)
-    : rawArgs.filter((a )=> a.startsWith("-"));
+    : rawArgs.filter((a) => a.startsWith("-"));
 const targetArgs = -1 !== dashIndex
     ? rawArgs.slice(1 + dashIndex)
     : rawArgs.filter((a) => !a.startsWith("-"));
