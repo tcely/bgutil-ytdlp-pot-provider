@@ -72,7 +72,10 @@ function run() {
 function canRun(cmd) {
     try {
         const checkCmd = isWin ? "where" : "which";
-        return 0 === spawnSync(checkCmd, [cmd], { stdio: "ignore", shell: isWin }).status;
+        return (
+            0 ===
+            spawnSync(checkCmd, [cmd], { stdio: "ignore", shell: isWin }).status
+        );
     } catch {
         return false;
     }
