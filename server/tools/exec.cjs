@@ -4,7 +4,7 @@ const fs = require("fs");
 
 const TARGET_VERSION = "v20.18.0";
 
-const isWin = process.platform === "win32";
+const isWin = "win32" === process.platform;
 const args = process.argv.slice(2);
 const tool = args[0];
 
@@ -29,7 +29,7 @@ function setupEnv() {
     }
 
     if (shouldUpdate) {
-        let content = isWin 
+        const content = isWin 
             ? `@echo off\r\nif "%~1"=="--version" (echo ${TARGET_VERSION} & exit /b 0)\r\ndeno run -A %*`
             : `#!/bin/sh\nif [ "$1" = "--version" ]; then echo "${TARGET_VERSION}"; exit 0; fi\nexec deno run -A "$@"`;
         fs.writeFileSync(nodeWrapperPath, content, { mode: 0o755 });
