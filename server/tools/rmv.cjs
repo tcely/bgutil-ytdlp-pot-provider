@@ -39,7 +39,9 @@ function rmv(p, topLevel = true) {
     const stats = fs.lstatSync(p);
     if (stats.isDirectory()) {
         if (!isRecursive) {
-            console.error(`rmv: cannot remove '${p}': Is a directory`);
+            console.error(
+                `rmv: cannot remove '${p}': Is a directory`,
+            );
             process.exit(1);
         }
         // Walk tree for verbose logging matching 'rm -v'
