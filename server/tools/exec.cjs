@@ -4,9 +4,33 @@ const fs = require("fs");
 
 const TARGET_VERSION = "v20.18.0";
 
+const WIN_NODE_WRAPPER = "@echo off\r\n" +
+    `if "%~1"=="--version" (echo ${TARGET_VERSION} & exit /b 0)\r\n` +
+    "deno run -A %*";
+
+const POSIX_NODE_WRAPPER = "#!/usr/bin/env sh\n" +
+    `if [ "$1" = "--version" ]; then echo "${TARGET_VERSION}"; exit 0; fi\n` +
+    "exec deno run -A \"$@\"";
+
 const isWin = "win32" === process.platform;
 const args = process.argv.slice(2);
 const tool = args[0];
+
+function writeNodeWrapper(wrapperPath) {
+    let shouldUpdate = !fs.existsSync(wrapperPath);
+
+    if (!shouldUpdate) {
+        const content = fs.readFileSync(wrapperPath, "utf8");
+        if (!content.includes(TARGET_VERSION)) {
+            shouldUpdate = true;
+        }
+    }
+
+    if (shouldUpdate) {
+        const content = isWin ? WIN_NODE_WRAPPER : POSIX_NODE_WRAPPER;
+        fs.writeFileSync(wrapperPath, content, { mode: 0o755 });
+    }
+}
 
 function setupEnv() {
     process.env.NO_COLOR = "1";
@@ -17,23 +41,12 @@ function setupEnv() {
     process.env.NPM_CONFIG_UPDATE_NOTIFIER = "false";
 
     const wrapperDir = path.join(process.cwd(), "node_modules", ".wrapper");
-    if (!fs.existsSync(wrapperDir)) fs.mkdirSync(wrapperDir, { recursive: true });
+    if (!fs.existsSync(wrapperDir)) {
+        fs.mkdirSync(wrapperDir, { recursive: true });
+    }
 
     const nodeWrapperPath = path.join(wrapperDir, isWin ? "node.cmd" : "node");
-    
-    // Check if the wrapper exists and contains the correct version string
-    let shouldUpdate = !fs.existsSync(nodeWrapperPath);
-    if (!shouldUpdate) {
-        const content = fs.readFileSync(nodeWrapperPath, "utf8");
-        if (!content.includes(TARGET_VERSION)) shouldUpdate = true;
-    }
-
-    if (shouldUpdate) {
-        const content = isWin 
-            ? `@echo off\r\nif "%~1"=="--version" (echo ${TARGET_VERSION} & exit /b 0)\r\ndeno run -A %*`
-            : `#!/bin/sh\nif [ "$1" = "--version" ]; then echo "${TARGET_VERSION}"; exit 0; fi\nexec deno run -A "$@"`;
-        fs.writeFileSync(nodeWrapperPath, content, { mode: 0o755 });
-    }
+    writeNodeWrapper(nodeWrapperPath);
 
     const sep = isWin ? ";" : ":";
     process.env.PATH = `${process.env.PATH}${sep}${wrapperDir}`;
