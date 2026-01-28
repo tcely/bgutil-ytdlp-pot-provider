@@ -14,10 +14,10 @@
     ],
     "version": "1.2.2",
     "scripts": {
-        "clean": "sh tools/rt tools/rmv.cjs -rf -- build/",
-        "lint": "sh tools/rt tools/exec.cjs eslint --max-warnings=0 src/",
-        "lint-fix": "sh tools/rt tools/exec.cjs eslint --fix --max-warnings=0 src/",
-        "format": "sh tools/rt tools/exec.cjs prettier --write 'src/**/*.{js,ts}'"
+        "clean": "tools/rt tools/rmv.cjs -rf -- build/",
+        "lint": "tools/rt tools/exec.cjs eslint --max-warnings=0 src/",
+        "lint-fix": "tools/rt tools/exec.cjs eslint --fix --max-warnings=0 src/",
+        "format": "tools/rt tools/exec.cjs prettier --write 'src/**/*.{js,ts}'"
     },
     "dependencies": {
         "axios": "^1.11.0",
