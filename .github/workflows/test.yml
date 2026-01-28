@@ -36,7 +36,7 @@ jobs:
         run: cd server && npx eslint --max-warnings=0 src/
       - name: Server format check (Prettier)
         if: always()
-        run: cd server && npx prettier --check 'src/**/*.{js,ts}'
+        run: cd server && npx prettier --check 'tools/**/*.cjs' 'src/**/*.{js,ts}'
 
   script-method:
     name: Test plugin (script method)
