@@ -9,7 +9,7 @@ const WIN_NODE_WRAPPER = "@echo off\r\n" +
     "deno run -A %*";
 
 const POSIX_NODE_WRAPPER = "#!/usr/bin/env sh\n" +
-    `if [ "$1" = "--version" ]; then echo "${TARGET_VERSION}"; exit 0; fi\n` +
+    `if [ "1:--version" = "$#:$1" ]; then echo "${TARGET_VERSION}"; exit 0; fi\n` +
     "exec deno run -A \"$@\"";
 
 const isWin = "win32" === process.platform;
