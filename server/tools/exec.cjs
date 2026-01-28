@@ -2,6 +2,8 @@ const { spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
+const TARGET_VERSION = "v20.18.0";
+
 const isWin = process.platform === "win32";
 const args = process.argv.slice(2);
 const tool = args[0];
@@ -13,6 +15,28 @@ function setupEnv() {
     process.env.DENO_NO_PROMPT = "1";
     process.env.NO_UPDATE_NOTIFIER = "1";
     process.env.NPM_CONFIG_UPDATE_NOTIFIER = "false";
+
+    const wrapperDir = path.join(process.cwd(), "node_modules", ".wrapper");
+    if (!fs.existsSync(wrapperDir)) fs.mkdirSync(wrapperDir, { recursive: true });
+
+    const nodeWrapperPath = path.join(wrapperDir, isWin ? "node.cmd" : "node");
+    
+    // Check if the wrapper exists and contains the correct version string
+    let shouldUpdate = !fs.existsSync(nodeWrapperPath);
+    if (!shouldUpdate) {
+        const content = fs.readFileSync(nodeWrapperPath, "utf8");
+        if (!content.includes(TARGET_VERSION)) shouldUpdate = true;
+    }
+
+    if (shouldUpdate) {
+        let content = isWin 
+            ? `@echo off\r\nif "%~1"=="--version" (echo ${TARGET_VERSION} & exit /b 0)\r\ndeno run -A %*`
+            : `#!/bin/sh\nif [ "$1" = "--version" ]; then echo "${TARGET_VERSION}"; exit 0; fi\nexec deno run -A "$@"`;
+        fs.writeFileSync(nodeWrapperPath, content, { mode: 0o755 });
+    }
+
+    const sep = isWin ? ";" : ":";
+    process.env.PATH = `${process.env.PATH}${sep}${wrapperDir}`;
 }
 
 function findLocalBin(startPath, toolName) {
@@ -58,7 +82,7 @@ function run() {
     if (canRun("pnpm")) return exit(exec("pnpm", ["dlx", "npx", ...args]));
 
     if ("undefined" !== typeof Bun || canRun("bun")) {
-        return exit(exec("bun", ["x", "npx", ...args]));
+        return exit(exec("bun", ["x", "--bun", "npx", ...args]));
     }
 
     if ("undefined" !== typeof Deno || canRun("deno")) {
@@ -82,7 +106,11 @@ function canRun(cmd) {
 }
 
 function exec(cmd, params) {
-    return spawnSync(cmd, params, { stdio: "inherit", shell: isWin });
+    return spawnSync(cmd, params, {
+        env: process.env,
+        shell: isWin,
+        stdio: "inherit",
+    });
 }
 
 function exit(result) {
