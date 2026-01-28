@@ -30,7 +30,9 @@ if (targetArgs.length === 0) {
 function rmv(p, topLevel = true) {
     if (!fs.existsSync(p)) {
         if (!isForce && topLevel) {
-            console.error(`rmv: cannot remove '${p}': No such file or directory`);
+            console.error(
+                `rmv: cannot remove '${p}': No such file or directory`,
+            );
             process.exit(1);
         }
         return;
@@ -39,9 +41,7 @@ function rmv(p, topLevel = true) {
     const stats = fs.lstatSync(p);
     if (stats.isDirectory()) {
         if (!isRecursive) {
-            console.error(
-                `rmv: cannot remove '${p}': Is a directory`,
-            );
+            console.error(`rmv: cannot remove '${p}': Is a directory`);
             process.exit(1);
         }
         // Walk tree for verbose logging matching 'rm -v'
