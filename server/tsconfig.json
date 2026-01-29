@@ -2,7 +2,7 @@
     "compilerOptions": {
         /* Version 5.9+ Node 20 Targets */
         "module": "node20",
-        "moduleResolution": "nodenext",
+        "moduleResolution": "node16",
         "target": "es2023",
 
         /* Strictness & Safety */
