@@ -35,8 +35,9 @@ function writeNodeWrapper(wrapperPath) {
 function setupEnv() {
     process.env.NO_COLOR = "1";
     process.env.DO_NOT_TRACK = "1";
-    process.env.DENO_NO_UPDATE_CHECK = "1";
+    process.env.DENO_COMPAT = "1";
     process.env.DENO_NO_PROMPT = "1";
+    process.env.DENO_NO_UPDATE_CHECK = "1";
     process.env.NO_UPDATE_NOTIFIER = "1";
     process.env.NPM_CONFIG_UPDATE_NOTIFIER = "false";
 
