@@ -15,6 +15,7 @@
     "version": "1.2.2",
     "scripts": {
         "clean": "tools/rt tools/rmv.cjs -rf -- build/",
+        "modules": "tools/rt tools/exec.cjs pnpm install --prefer-frozen-lockfile",
         "lint": "tools/rt tools/exec.cjs eslint --max-warnings=0 src/",
         "lint-fix": "tools/rt tools/exec.cjs eslint --fix --max-warnings=0 src/",
         "format": "tools/rt tools/exec.cjs prettier --write 'src/**/*.{js,ts}'"
