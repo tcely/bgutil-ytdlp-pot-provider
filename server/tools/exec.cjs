@@ -93,14 +93,22 @@ function run() {
     if (canRun("npx")) return exit(exec("npx", args));
 
     // 2. Registry Fallbacks
-    if (canRun("pnpm")) return exit(exec("pnpm", ["dlx", "npx", ...args]));
+    if (canRun("pnpm")) {
+        return exit(
+            exec("pnpm", ["dlx", "--package=npm", "npx", "--yes", ...args]),
+        );
+    }
 
     if ("undefined" !== typeof Bun || canRun("bun")) {
-        return exit(exec("bun", ["x", "--bun", "npx", ...args]));
+        return exit(
+            exec("bun", ["x", "--shell=bun", "--bun", "--package", "npm", "npx", "--yes", ...args]),
+        );
     }
 
     if ("undefined" !== typeof Deno || canRun("deno")) {
-        return exit(exec("deno", ["run", "-A", "npm:npx", ...args]));
+        return exit(
+            exec("deno", ["run", "-A", "npm:npm/npx", "--yes", ...args]),
+        );
     }
 
     // 3. Local/Monorepo Search -> Global PATH
