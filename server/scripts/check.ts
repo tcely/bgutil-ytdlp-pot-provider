@@ -4,11 +4,28 @@ import * as fs from "node:fs";
 
 const serverHome = path.resolve(import.meta.dirname, "..");
 
-function getDenoPkgs() {
-    let pkgs: Record<string, string> = {};
-    const { version, npm } = JSON.parse(fs.readFileSync(path.resolve(
-        serverHome, "deno.lock")).toString());
-    if (version < 4 || version > 5)
+function pkgJsonDenoV5ToV4(lockfile): void {
+    const { version, specifiers } = lockfile;
+    if (version === "4") return;
+    if (version !== "5")
+        throw new Error(`Invalid deno.lock version: ${version}`);
+    lockfile.workspace.packageJson.dependencies = [];
+    lockfile.specifiers = {};
+    for (const depPin in specifiers) {
+        const pkgName = depPin.split("@").slice(0, -1).join("@");
+        const pkgFullVer = specifiers[depPin];
+        const pkgVer = pkgFullVer.split("_")[0];
+        const newKey = `${pkgName}@${pkgVer}`;
+        lockfile.workspace.packageJson.dependencies.push(newKey);
+        lockfile.specifiers[newKey] = pkgFullVer;
+    }
+    lockfile.version = "4";
+}
+
+function getDenoPkgs(lockfile) {
+    const pkgs: Record<string, string> = {};
+    const { version, npm } = lockfile;
+    if (version !== "4" && version !== "5")
         throw new Error(`Unsupported deno.lock lockfile version ${version}`);
 
     for (const name in npm) {
@@ -22,10 +39,9 @@ function getDenoPkgs() {
     return pkgs;
 }
 
-function getNodePkgs() {
-    let pkgs: Record<string, string> = {};
-    const { lockfileVersion: version , packages: npm } = JSON.parse(fs.readFileSync(
-        path.resolve(serverHome, "package-lock.json")).toString());
+function getNodePkgs(lockfile) {
+    const pkgs: Record<string, string> = {};
+    const { lockfileVersion: version , packages: npm } = lockfile;
     if (version !== 3)
         throw new Error(
             `Unsupported package-lock.json lockfile version ${version}`);
@@ -45,8 +61,14 @@ function getNodePkgs() {
 }
 
 try {
-    const denoPkgs = getDenoPkgs();
-    const nodePkgs = getNodePkgs();
+    const denoPath = path.resolve(serverHome, "deno.lock");
+    const denoLock = JSON.parse(fs.readFileSync(denoPath).toString());
+    console.log(JSON.stringify(denoLock.version));
+    fs.writeFileSync(denoPath, JSON.stringify(denoLock, null, 2).trim());
+
+    const denoPkgs = getDenoPkgs(denoLock);
+    const nodePkgs = getNodePkgs(JSON.parse(fs.readFileSync(path.resolve(
+        serverHome, "package-lock.json")).toString()));
 
     for (const denoIt in denoPkgs)
         if (!(denoIt in nodePkgs))
