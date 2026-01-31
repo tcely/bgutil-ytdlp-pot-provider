@@ -9,6 +9,7 @@ function pkgJsonDenoV5ToV4(lockfile): void {
     if (version === "4") return;
     if (version !== "5")
         throw new Error(`Invalid deno.lock version: ${version}`);
+    /*
     lockfile.workspace.packageJson.dependencies = [];
     lockfile.specifiers = {};
     for (const depPin in specifiers) {
@@ -19,6 +20,7 @@ function pkgJsonDenoV5ToV4(lockfile): void {
         lockfile.workspace.packageJson.dependencies.push(newKey);
         lockfile.specifiers[newKey] = pkgFullVer;
     }
+    */
     lockfile.version = "4";
 }
 
@@ -64,7 +66,7 @@ try {
     const denoPath = path.resolve(serverHome, "deno.lock");
     const denoLock = JSON.parse(fs.readFileSync(denoPath).toString());
     console.log(JSON.stringify(denoLock.version));
-    fs.writeFileSync(denoPath, JSON.stringify(denoLock, null, 2).trim());
+    fs.writeFileSync(denoPath, JSON.stringify(denoLock, null, 2) + "\n");
 
     const denoPkgs = getDenoPkgs(denoLock);
     const nodePkgs = getNodePkgs(JSON.parse(fs.readFileSync(path.resolve(
