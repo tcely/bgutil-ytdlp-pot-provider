@@ -1,5 +1,4 @@
-FROM denoland/deno:alpine-2.5.6
-EXPOSE 4416
+FROM denoland/deno:alpine-2.6.7
 RUN mkdir /app
 RUN chown deno /app
 USER deno
@@ -10,4 +9,6 @@ COPY src/ src/
 RUN deno install --allow-scripts=npm:canvas --frozen --entrypoint src/main.ts
 RUN deno cache src/main.ts
 
+# Newer Deno doesn't require CWD read access
+# See: https://github.com/denoland/deno/commit/4e655e543f7053505586209689f824c1b2ce878c
 ENTRYPOINT ["deno", "run", "--allow-env", "--allow-ffi", "--allow-net", "--allow-read=/app/node_modules", "src/main.ts"]
