@@ -80,8 +80,8 @@ jobs:
         run: |
           exit_code=0
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              echo "script version: $(deno run --allow-read --allow-env --allow-ffi --unstable-sloppy-imports server/src/generate_once.js --version)"
-              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net --unstable-sloppy-imports server/src/generate_once.ts | tail -n 1)
+              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/src/generate_once.js --version)"
+              script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net server/src/generate_once.ts | tail -n 1)
           else
               echo "script version: $(node server/build/generate_once.js --version)"
               script_output=$(node server/build/generate_once.js | tail -n 1)
@@ -187,7 +187,7 @@ jobs:
           if [ "${{ matrix.run }}" = "native" ]; then
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               (cd server && deno install --frozen --allow-scripts=npm:canvas)
-              deno run --allow-env --allow-ffi --allow-net "--allow-read=$PWD" --unstable-sloppy-imports server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
+              deno run --allow-env --allow-ffi --allow-net --allow-read=server/node_modules server/src/main.ts --port "${{ env.PORT }}" > server.log 2>&1 &
             else
               (cd server && npm ci && npx tsc)
               node server/build/main.js --port "${{ env.PORT }}" > server.log 2>&1 &

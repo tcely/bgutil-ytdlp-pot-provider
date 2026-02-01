@@ -266,11 +266,12 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
             self._server_home, 'src', self._SCRIPT_BASENAME)
 
     def _jsrt_args(self) -> Iterable[str]:
+        node_mods_path = os.path.join(self._server_home, 'node_modules')
         return (
             'run', '--allow-env', '--allow-net',
             f'--allow-ffi={self._server_home}',
             f'--allow-write={self._script_cache_dir}',
-            f'--allow-read={self._script_cache_dir}',
+            f'--allow-read={self._script_cache_dir},{node_mods_path}',
         )
 
 

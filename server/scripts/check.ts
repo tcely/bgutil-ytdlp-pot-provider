@@ -5,22 +5,10 @@ import * as fs from "node:fs";
 const serverHome = path.resolve(import.meta.dirname, "..");
 
 function pkgJsonDenoV5ToV4(lockfile): void {
-    const { version, specifiers } = lockfile;
+    const { version } = lockfile;
     if (version === "4") return;
     if (version !== "5")
         throw new Error(`Invalid deno.lock version: ${version}`);
-    /*
-    lockfile.workspace.packageJson.dependencies = [];
-    lockfile.specifiers = {};
-    for (const depPin in specifiers) {
-        const pkgName = depPin.split("@").slice(0, -1).join("@");
-        const pkgFullVer = specifiers[depPin];
-        const pkgVer = pkgFullVer.split("_")[0];
-        const newKey = `${pkgName}@${pkgVer}`;
-        lockfile.workspace.packageJson.dependencies.push(newKey);
-        lockfile.specifiers[newKey] = pkgFullVer;
-    }
-    */
     lockfile.version = "4";
 }
 
