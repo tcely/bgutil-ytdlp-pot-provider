@@ -14,7 +14,7 @@ COPY src/ src/
 COPY types/ types/
 RUN npx tsc
 
-FROM install as server
+FROM install AS server
 
 RUN npm ci --omit=dev --no-audit --no-fund && \
     npm audit && npm audit signatures
