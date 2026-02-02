@@ -31,7 +31,7 @@ jobs:
         run: autopep8 --diff plugin/
       - name: Install server dependencies
         if: always()
-        run: cd server && npm ci
+        run: cd server && npm ci --no-audit && npm audit
       - name: Server lint check (ESlint)
         if: always()
         run: cd server && npx eslint --max-warnings=0 src/
@@ -64,6 +64,7 @@ jobs:
         with:
           node-version: "20" # minimum supported version
       - name: Install and build server dependencies
+        shell: bash
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
@@ -80,7 +81,7 @@ jobs:
         run: |
           exit_code=0
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/src/generate_once.js --version)"
+              echo "script version: $(deno run --allow-read --allow-env --allow-ffi server/src/generate_once.ts --version)"
               script_output=$(deno run --allow-read --allow-write --allow-env --allow-ffi --allow-net server/src/generate_once.ts | tail -n 1)
           else
               echo "script version: $(node server/build/generate_once.js --version)"
@@ -151,6 +152,7 @@ jobs:
       - name: Download yt-dlp
         run: curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp && chmod +x ./yt-dlp
       - name: Install plugin
+        shell: bash
         run: |
           mkdir -p ~/yt-dlp-plugins/bgutil-ytdlp-pot-provider/
           cp -r plugin/ ~/yt-dlp-plugins/
@@ -183,12 +185,24 @@ jobs:
             done
           }
           export -f ping
+          print_logs() {
+            if [ "${{ matrix.run }}" = "native" ]; then
+              [ -n "$SERVER_PID" ] && kill -9 "$SERVER_PID"
+              echo "::group::Logs from ${{ matrix.run }} HTTP server"
+              cat server.log
+            else
+              docker stop bgutil-provider
+              echo "::group::Logs from ${{ matrix.run }} HTTP server"
+              docker logs -t bgutil-provider
+            fi
+            echo "::endgroup::"
+          }
 
           if [ "${{ matrix.run }}" = "native" ]; then
             cd server
             if [ "${{ matrix.jsrt }}" = "deno" ]; then
               deno install --frozen --allow-scripts=npm:canvas
-              deno run --allow-env --allow-ffi --allow-net --allow-read="$PWD" \
+              deno run --allow-env --allow-ffi=node_modules --allow-net --allow-read=. \
                 src/main.ts --port "${{ env.PORT }}" > ../server.log 2>&1 &
             else
               npm ci && npx tsc
@@ -203,7 +217,7 @@ jobs:
           echo "Waiting for server to be up..."
           PING_RESP=$(timeout ${{ env.TIMEOUT }} bash -c "ping ${{ env.INTERVAL }}") || \
             (echo "::error title=Timeout reached,file=server/src/main.ts::\
-          Timeout reached before the server is up." && cat server.log && exit 1)
+          Timeout reached before the server is up." && print_logs && exit 1)
 
           echo "::group::Response from HTTP server"
           if echo "$PING_RESP" | jq -e . >/dev/null 2>&1; then
@@ -236,16 +250,7 @@ jobs:
             ret=$?
           } || true
 
-          if [ "${{ matrix.run }}" = "native" ]; then
-            [ -n "$SERVER_PID" ] && kill -9 "$SERVER_PID"
-            echo "::group::Logs from ${{ matrix.run }} HTTP server"
-            cat server.log
-          else
-            docker stop bgutil-provider
-            echo "::group::Logs from ${{ matrix.run }} HTTP server"
-            docker logs bgutil-provider
-          fi
-          echo "::endgroup::"
+          print_logs
 
           echo "::group::Logs from yt-dlp"
           printf "%s\n" "$server_response"
