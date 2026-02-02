@@ -3,8 +3,6 @@ USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund && \
-    npm audit && npm audit signatures
 
 FROM install AS build
 
@@ -18,6 +16,8 @@ RUN npx tsc
 
 FROM install as server
 
+RUN npm ci --omit=dev --no-audit --no-fund && \
+    npm audit && npm audit signatures
 COPY --from=build /app/build /app/build
 
 EXPOSE 4416
