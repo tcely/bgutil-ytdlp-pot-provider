@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import sysconfig
 from typing import Iterable, TypeVar
 
@@ -17,12 +18,13 @@ from yt_dlp.extractor.youtube.pot.provider import (
     register_provider,
 )
 from yt_dlp.extractor.youtube.pot.utils import get_webpo_content_binding
-from yt_dlp.utils.traversal import traverse_obj
 from yt_dlp.utils import Popen, int_or_none
+from yt_dlp.utils.traversal import traverse_obj
 
 from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
 
 T = TypeVar('T')
+_FALLBACK_PATHEXT = ('.COM', '.EXE', '.BAT', '.CMD')
 
 
 # Copied from https://github.com/yt-dlp/yt-dlp/blob/891613b098b2b315d983c2ae16901f5de344ca56/yt_dlp/utils/_jsruntime.py#L16-L64
@@ -76,6 +78,7 @@ def _determine_runtime_path(path, basename):
         return os.path.join(path, basename)
     return path
 
+
 class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     _GET_SCRIPT_VSN_TIMEOUT = 15.0
 
@@ -113,6 +116,11 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
                 'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds', once=True)
+            return None
+        except FileNotFoundError:
+            report_jsrt_unavail(
+                f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is '
+                'installed and available in PATH or passed to yt-dlp with --js-runtimes.', once=True)
             return None
         mobj = re.search(self._JSRT_VSN_REGEX, stdout)
         if returncode or not mobj:
