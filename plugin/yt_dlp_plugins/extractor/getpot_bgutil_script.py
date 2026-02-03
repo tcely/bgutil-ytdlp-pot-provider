@@ -5,8 +5,8 @@ import functools
 import json
 import os
 import re
-import shutil
 import subprocess
+import sysconfig
 from typing import Iterable, TypeVar
 
 from yt_dlp.extractor.youtube.pot.provider import (
@@ -17,6 +17,7 @@ from yt_dlp.extractor.youtube.pot.provider import (
     register_provider,
 )
 from yt_dlp.extractor.youtube.pot.utils import get_webpo_content_binding
+from yt_dlp.utils.traversal import traverse_obj
 from yt_dlp.utils import Popen, int_or_none
 
 from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
@@ -24,11 +25,67 @@ from yt_dlp_plugins.extractor.getpot_bgutil import BgUtilPTPBase
 T = TypeVar('T')
 
 
+# Copied from https://github.com/yt-dlp/yt-dlp/blob/891613b098b2b315d983c2ae16901f5de344ca56/yt_dlp/utils/_jsruntime.py#L16-L64
+def _find_exe(basename: str) -> str:
+    # Check in Python "scripts" path, e.g. for pipx-installed binaries
+    binary = os.path.join(
+        sysconfig.get_path('scripts'),
+        basename + sysconfig.get_config_var('EXE'))
+    if os.access(binary, os.F_OK | os.X_OK) and not os.path.isdir(binary):
+        return binary
+
+    if os.name != 'nt':
+        return basename
+
+    paths: list[str] = []
+
+    # binary dir
+    if getattr(sys, 'frozen', False):
+        paths.append(os.path.dirname(sys.executable))
+    # cwd
+    paths.append(os.getcwd())
+    # PATH items
+    if path := os.environ.get('PATH'):
+        paths.extend(filter(None, path.split(os.path.pathsep)))
+
+    pathext = os.environ.get('PATHEXT')
+    if pathext is None:
+        exts = _FALLBACK_PATHEXT
+    else:
+        exts = tuple(ext for ext in pathext.split(os.pathsep) if ext)
+
+    visited = []
+    for path in map(os.path.realpath, paths):
+        normed = os.path.normcase(path)
+        if normed in visited:
+            continue
+        visited.append(normed)
+
+        for ext in exts:
+            binary = os.path.join(path, f'{basename}{ext}')
+            if os.access(binary, os.F_OK | os.X_OK) and not os.path.isdir(binary):
+                return binary
+
+    return basename
+
+
+def _determine_runtime_path(path, basename):
+    if not path:
+        return _find_exe(basename)
+    if os.path.isdir(path):
+        return os.path.join(path, basename)
+    return path
+
 class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
-    _GET_SCRIPT_VSN_TIMEOUT = 15
+    _GET_SCRIPT_VSN_TIMEOUT = 15.0
+
+    @staticmethod
+    def _jsrt_vsn_tup(v: str):
+        return tuple(int_or_none(x, default=0) for x in v.split('.'))
+
     _SCRIPT_BASENAME: str
-    _JSRT_NAME: str
-    _JSRT_EXEC: str
+    _JSRT_NAME: str  # Name of the JS Runtime shown in logs
+    _JSRT_EXEC: str  # Name of the executable, and the name used in yt-dlp
     _JSRT_VSN_REGEX: str
     _JSRT_MIN_VER: tuple[int, ...]
 
@@ -44,17 +101,14 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
 
     def _jsrt_path_impl(self) -> str | None:
         report_jsrt_unavail = self.logger.warning if self._jsrt_warn_unavail else self.logger.debug
-        jsrt_path = shutil.which(self._JSRT_EXEC)
-        if jsrt_path is None:
-            # TODO: test if root dir works
-            report_jsrt_unavail(
-                f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is installed and available '
-                'in PATH or the root directory of yt-dlp.', once=True)
-            return None
+        jsrt_path = _determine_runtime_path(
+            traverse_obj(self.ie.get_param('js_runtimes'), (self._JSRT_EXEC, 'path')),
+            self._JSRT_EXEC)
         try:
-            stdout, stderr, returncode = Popen.run(
-                [jsrt_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=5)
+            stdout, _, returncode = Popen.run(
+                [jsrt_path, '--version'], text=True,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                timeout=5.0)
         except subprocess.TimeoutExpired:
             report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
@@ -65,7 +119,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             report_jsrt_unavail(
                 f'Failed to check {self._JSRT_NAME} version. '
                 f'{self._JSRT_NAME} returned {returncode} exit status. '
-                f'Process stdout: {stdout}; stderr: {stderr}', once=True)
+                f'Process stdout: {stdout}', once=True)
             return None
         if self._jsrt_has_support(mobj.group(1)):
             return jsrt_path
@@ -97,10 +151,8 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_script = functools.cache(self._check_script_impl)
-
-    @staticmethod
-    def _jsrt_vsn_tup(v: str):
-        return tuple(int_or_none(x, default=0) for x in v.split('.'))
+        # TODO: document this
+        self._deno_preferred = self._base_config_arg('prefer_deno', 'false') != 'false'
 
     def _base_config_arg(self, key: str, default: T = None) -> str | T:
         return self.ie._configuration_arg(
@@ -108,9 +160,9 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
 
     @functools.cached_property
     def _server_home(self) -> str:
-        # TODO: document this
         resolve_path = lambda *ps: os.path.abspath(
             os.path.expanduser(os.path.expandvars(os.path.join(*ps))))
+        # TODO: document this
         if server_home := self._base_config_arg('server_home'):
             return resolve_path(server_home)
 
@@ -191,9 +243,9 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             f'Executing command to get POT via script: {" ".join(command_args)}')
 
         try:
-            stdout, stderr, returncode = Popen.run(
-                command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=int(self._GETPOT_TIMEOUT))
+            stdout, _, returncode = Popen.run(
+                command_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                timeout=self._GETPOT_TIMEOUT)
         except subprocess.TimeoutExpired as e:
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})')
@@ -201,14 +253,8 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed: Unable to run script (caused by {e!r})') from e
 
-        msg = ''
         if stdout_extra := stdout.strip().splitlines()[:-1]:
-            msg = f'stdout:\n{stdout_extra}\n'
-        if stderr_stripped := stderr.strip():  # Empty strings are falsy
-            msg += f'stderr:\n{stderr_stripped}\n'
-        msg = msg.strip()
-        if msg:
-            self.logger.trace(msg)
+            self.logger.trace(f'script stdout:\n{stdout_extra}')
         if returncode:
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed with returncode {returncode}')
@@ -237,7 +283,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
     _JSRT_MIN_VER = (20, 0, 0)
 
     def _jsrt_warn_unavail_impl(self) -> bool:
-        return self._base_config_arg('prefer_node', 'false') != 'false'
+        return not self._deno_preferred
 
     def _script_path_impl(self) -> str:
         return os.path.join(
@@ -246,7 +292,7 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
 
 @register_preference(BgUtilScriptNodePTP)
 def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request):
-    return 10 if provider._base_config_arg('prefer_node', 'false') != 'false' else 1
+    return 1 if provider._deno_preferred else 10
 
 
 @register_provider
@@ -259,7 +305,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     _JSRT_MIN_VER = (2, 0, 0)
 
     def _jsrt_warn_unavail_impl(self) -> bool:
-        return self._base_config_arg('prefer_node') == 'false'
+        return self._deno_preferred
 
     def _script_path_impl(self) -> str:
         return os.path.join(
@@ -277,7 +323,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
 
 @register_preference(BgUtilScriptDenoPTP)
 def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
-    return 1 if provider._base_config_arg('prefer_node', 'false') != 'false' else 10
+    return 10 if provider._deno_preferred else 1
 
 
 __all__ = [
