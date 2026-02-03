@@ -1,16 +1,21 @@
 FROM denoland/deno:alpine-2.6.7 AS build
 USER deno
+RUN deno info
+ENV DENO_DIR=/home/deno/.cache/deno
+RUN deno info
 WORKDIR /app
 
 COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
 COPY types/ types/
 
-RUN deno install --allow-scripts=npm:canvas --frozen && deno audit --frozen
+RUN --mount=type=cache,target=/home/deno/.cache,uid=1000,gid=1000 \
+    deno install --allow-scripts=npm:canvas --frozen && deno audit --frozen
 # Newer Deno doesn't require CWD read access
 # See: https://github.com/denoland/deno/commit/4e655e543f7053505586209689f824c1b2ce878c
 # XXX: the node_modules dir path could change in the future
-RUN deno compile --output server --no-check --allow-env --allow-net \
+RUN --mount=type=cache,target=/home/deno/.cache,uid=1000,gid=1000 \
+    deno compile --output server --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
