@@ -1,8 +1,6 @@
 FROM denoland/deno:alpine-2.6.7 AS build
 USER deno
-RUN deno info
-ENV DENO_DIR=/home/deno/.cache/deno
-RUN deno info
+ENV DENO_DIR=
 WORKDIR /app
 
 COPY tsconfig.json package.json deno.lock ./
