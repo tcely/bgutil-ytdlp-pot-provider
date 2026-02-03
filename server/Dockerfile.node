@@ -3,12 +3,14 @@ USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund && \
+RUN --mount=type=cache,target=/home/node/.npm \
+    npm ci --omit=dev --no-audit --no-fund && \
     npm audit && npm audit signatures
 
 FROM install AS build
 
-RUN npm ci --no-audit --no-fund && \
+RUN --mount=type=cache,target=/home/node/.npm \
+    npm ci --no-audit --no-fund && \
     npm audit && npm audit signatures
 
 COPY tsconfig.json ./

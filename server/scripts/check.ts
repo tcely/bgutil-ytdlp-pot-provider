@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 
 const serverHome = path.resolve(import.meta.dirname, "..");
 
-function pkgJsonDenoV5ToV4(lockfile): void {
+function downgradeLock(lockfile): void {
     const { version } = lockfile;
     if (version === "4") return;
     if (version !== "5")
@@ -54,7 +54,7 @@ try {
     const denoPath = path.resolve(serverHome, "deno.lock");
     const denoLock = JSON.parse(fs.readFileSync(denoPath).toString());
     console.log(JSON.stringify(denoLock.version));
-    fs.writeFileSync(denoPath, JSON.stringify(denoLock, null, 2) + "\n");
+    fs.writeFileSync(denoPath, JSON.stringify(downgradeLock(denoLock), null, 2) + "\n");
 
     const denoPkgs = getDenoPkgs(denoLock);
     const nodePkgs = getNodePkgs(JSON.parse(fs.readFileSync(path.resolve(
