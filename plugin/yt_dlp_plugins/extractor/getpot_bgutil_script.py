@@ -170,7 +170,6 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _server_home(self) -> str:
         resolve_path = lambda *ps: os.path.abspath(
             os.path.expanduser(os.path.expandvars(os.path.join(*ps))))
-        # TODO: document this
         if server_home := self._base_config_arg('server_home'):
             return resolve_path(server_home)
 
