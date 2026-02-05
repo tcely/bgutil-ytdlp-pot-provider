@@ -227,6 +227,7 @@ jobs:
             case "${{ matrix.jsrt }}" in
               deno)
                 deno install --frozen
+                cat deno.json
                 (
                   cd node_modules && \
                   deno run --allow-env --allow-net --allow-ffi=. --allow-read=. \
