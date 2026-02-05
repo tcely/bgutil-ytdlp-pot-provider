@@ -43,7 +43,7 @@ cd bgutil-ytdlp-pot-provider/server/
 npm ci
 npx tsc
 # Otherwise, if you want to use Deno:
-deno install --frozen
+deno install --allow-scripts=npm:canvas --frozen
 ```
 
 #### (a) HTTP Server Option

@@ -226,8 +226,8 @@ jobs:
             cd server
             case "${{ matrix.jsrt }}" in
               deno)
-                deno install --frozen
-                cat deno.json
+                # We don't need swc-node
+                deno install --allow-scripts=npm:canvas --frozen
                 (
                   cd node_modules && \
                   deno run --allow-env --allow-net --allow-ffi=. --allow-read=. \

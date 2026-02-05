@@ -6,7 +6,7 @@ COPY tsconfig.json package.json deno.lock deno.json ./
 COPY src/ src/
 COPY types/ types/
 
-RUN deno install --frozen && deno audit --frozen
+RUN deno install --allow-scripts=npm:canvas --frozen && deno audit --frozen
 # Newer Deno doesn't require CWD read access
 # See: https://github.com/denoland/deno/commit/4e655e543f7053505586209689f824c1b2ce878c
 # XXX: the node_modules dir path could change in the future
