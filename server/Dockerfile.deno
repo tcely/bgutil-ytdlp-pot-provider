@@ -2,7 +2,7 @@ FROM denoland/deno:alpine-2.6.7 AS build
 USER deno
 WORKDIR /app
 
-COPY tsconfig.json package.json deno.lock deno.json ./
+COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
 COPY types/ types/
 
