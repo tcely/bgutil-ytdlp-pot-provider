@@ -70,7 +70,7 @@ jobs:
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen --allow-scripts=npm:canvas
+            deno install --frozen
           else
             npm ci && npx tsc
           fi
@@ -113,7 +113,7 @@ jobs:
           # expect this to fail, but just make sure that the plugin is invoked
           {
             script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args \
-              "youtubepot-bgutilscript:script_path=server/build/generate_once.js;\
+              "youtubepot-bgutilscript:server_home=server;\
           prefer_deno=${{ matrix.jsrt == 'deno' }}" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
@@ -226,16 +226,20 @@ jobs:
             cd server
             case "${{ matrix.jsrt }}" in
               deno)
-                deno install --frozen --allow-scripts=npm:canvas
-                deno run --allow-env --allow-ffi=node_modules --allow-net --allow-read=. \
-                  src/main.ts --port "${{ env.PORT }}" > ../server.log 2>&1 &
+                deno install --frozen
+                (
+                  cd node_modules && \
+                  deno run --allow-env --allow-net --allow-ffi=. --allow-read=. \
+                    ../src/main.ts --port "${{ env.PORT }}" > ../../server.log 2>&1 &
+                  SERVER_PID=$!
+                )
                 ;;
               node)
                 npm ci && npx tsc
                 node build/main.js --port "${{ env.PORT }}" > ../server.log 2>&1 &
+                SERVER_PID=$!
                 ;;
             esac
-            SERVER_PID=$!
             cd ..
           else
             docker run --name bgutil-provider -d -p ${{ env.PORT }}:4416 \

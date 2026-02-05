@@ -33,30 +33,51 @@ The provider comes in two parts:
 
 There are two options for the provider, an always running POT generation HTTP server, and a POT generation script invoked when needed. The HTTP server option is simpler, faster, and comes with a prebuilt Docker image. **You only need to choose one option.**
 
+You need to first install the repository for either option:
+
+```shell
+# Replace 1.2.2 with the latest version or the one that matches the plugin
+git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
+cd bgutil-ytdlp-pot-provider/server/
+# If you are using Node:
+npm ci
+npx tsc
+# Otherwise, if you want to use Deno:
+deno install --frozen
+```
+
 #### (a) HTTP Server Option
 
-The provider is a Node.js HTTP server. You have two options for running it: as a prebuilt docker image, or manually as a Node.js application.
+This is a JavaScript HTTP server, on port 4416 by default. You have two options for running it: as a prebuilt Docker image, or manually as a JavaScript application.
 
 **Docker:**
 
+Port 4416 is exposed to the host system by default. Pass `-p 1234:4416` in the docker run options (before the image name) to publish the server to port 1234 on the host system. Replace `[OPTIONS]` with the server command line options (usually this is not needed because you can use docker to publish the server to another port).
+
 ```shell
-docker run --name bgutil-provider -d -p 4416:4416 --init brainicism/bgutil-ytdlp-pot-provider
+docker run --name bgutil-provider -d --init brainicism/bgutil-ytdlp-pot-provider [OPTIONS]
 ```
 
-Our Docker image comes in two flavors: Node or Deno. The `:latest` tag defaults to Node, but you can specify an alternate version/flavor like so: `brainicism/bgutil-ytdlp-pot-provider:1.2.2-deno`. The `:node` tag also points to the latest Node image, and `:deno` points to the latest Deno image.
+Our Docker image comes in two flavors: Node.js or Deno. The `:latest` tag defaults to Node.js, but you can specify an alternate version/flavor like so: `brainicism/bgutil-ytdlp-pot-provider:1.2.2-deno`. The `:node` tag also points to the latest Node.js image, and `:deno` points to the latest Deno image.
 
 > [!IMPORTANT]
 > Note that the docker container's network is isolated from your local network by default. If you are using a local proxy server, it will not be accessible from within the container unless you pass `--net=host` as well.
 
 **Native:**
 
+Run the server with the selected JavaScript runtime with the following command, assuming you have changed into the `bgutil-ytdlp-pot-provider/server` directory. Replace `[OPTIONS]` with the server command line options. For example, replace it with `--port 8080` to run the server on port 8080.
+
+Node:
+
 ```shell
-# Replace 1.2.2 with the latest version or the one that matches the plugin
-git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
-cd bgutil-ytdlp-pot-provider/server/
-npm ci
-npx tsc
-node build/main.js
+node build/main.js [OPTIONS]
+```
+
+Deno:
+
+```shell
+cd node_modules
+deno run --allow-env --allow-net --allow-ffi=. --allow-read=. ../src/main.ts [OPTIONS]
 ```
 
 **Server Command Line Options**
@@ -66,23 +87,9 @@ node build/main.js
 #### (b) Generation Script Option
 
 > [!IMPORTANT]
-> This method is not recommended for high concurrency usage. Every yt-dlp call incurs the overhead of spawning a new node process to run the script. This method also handles cache concurrency poorly.
+> This method is NOT recommended for high concurrency usage. Every yt-dlp call incurs the overhead of spawning a new Node.js process to run the script. This method also handles cache concurrency poorly.
 
-1. Transpile the generation script to Javascript:
-
-```shell
-# If you want to use this method without specifying `script_path` extractor argument
-# on each yt-dlp invocation, clone/extract the source code into your home directory.
-# Replace `~` with `%USERPROFILE%` if using Windows
-cd ~
-# Replace 1.2.2 with the latest version or the one that matches the plugin
-git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
-cd bgutil-ytdlp-pot-provider/server/
-npm ci
-npx tsc
-```
-
-2. Make sure `node` is available in your `PATH`.
+For this option, just make sure either `node` or `deno` is available in your `PATH`. Otherwise, use the yt-dlp option `--js-runtimes RUNTIME:PATH` to pass the path. `--no-js-runtimes` does NOT prevent the plugin from using the JavaScript runtime. The argument is only used to retrieve the path to the runtime.
 
 ### 2. Install the plugin
 
@@ -101,13 +108,7 @@ python3 -m pip install -U bgutil-ytdlp-pot-provider
 
 ## Usage
 
-If using option (a) HTTP Server for the provider, and the default IP/port number, you can use yt-dlp like normal 🙂.
-
-If you want to change the port number used by the provider server, use the `--port` option.
-
-```shell
-node build/main.js --port 8080
-```
+If using option (a) HTTP Server for the provider, and the default IP/port number (http://127.0.0.1:4416), you can use yt-dlp like normal 🙂.
 
 If changing the port or IP used for the provider server, pass it to yt-dlp via `base_url`
 
@@ -127,10 +128,10 @@ Note that when you pass multiple extractor arguments to one provider or extracto
 
 If using option (b) script for the provider, with the default script location in your home directory (i.e: `~/bgutil-ytdlp-pot-provider` or `%USERPROFILE%\bgutil-ytdlp-pot-provider`), you can also use yt-dlp like normal.
 
-If you installed the script in a different location, pass it as the extractor argument `script_path` to `youtube-bgutilscript` for each yt-dlp call. `~` at the start of the path is automatically expanded.
+If you installed the script in a different location, pass it as the extractor argument `server_home` to `youtube-bgutilscript` for each yt-dlp call. `~` at the start of the path is automatically expanded.
 
 ```shell
---extractor-args "youtubepot-bgutilscript:script_path=/path/to/bgutil-ytdlp-pot-provider/server/build/generate_once.js"
+--extractor-args "youtubepot-bgutilscript:server_home=/path/to/bgutil-ytdlp-pot-provider/server"
 ```
 
 ---
