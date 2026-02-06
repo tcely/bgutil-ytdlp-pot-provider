@@ -33,7 +33,7 @@ The provider comes in two parts:
 
 There are two options for the provider, an always running POT generation HTTP server, and a POT generation script invoked when needed. The HTTP server option is simpler, faster, and comes with a prebuilt Docker image. **You only need to choose one option.**
 
-You need to first install the repository for either option:
+You need to first install the repository unless you are using the Docker image for the HTTP server:
 
 ```shell
 # Replace 1.2.2 with the latest version or the one that matches the plugin
