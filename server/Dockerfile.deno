@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
 # See: https://github.com/denoland/deno/commit/4e655e543f7053505586209689f824c1b2ce878c
 # XXX: the node_modules dir path could change in the future
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
-    deno compile --output server --no-check --allow-env --allow-net \
+    deno compile --output server --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
