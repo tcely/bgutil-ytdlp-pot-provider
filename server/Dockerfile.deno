@@ -4,8 +4,6 @@ WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
 COPY package.json deno.lock ./
-RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
-    ls /home/deno/.cache/deno
 
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
     deno install --allow-scripts=npm:canvas --frozen && deno audit --frozen

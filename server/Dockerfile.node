@@ -3,8 +3,6 @@ USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
-    ls /home/node/.npm
 
 RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
     npm ci --omit=dev --no-audit --no-fund && \
