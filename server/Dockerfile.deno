@@ -3,13 +3,16 @@ USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
-COPY tsconfig.json package.json deno.lock ./
-COPY src/ src/
-COPY types/ types/
+COPY package.json deno.lock ./
+RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
+    ls /home/deno/.cache/deno
 
-RUN echo uncache
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
     deno install --allow-scripts=npm:canvas --frozen && deno audit --frozen
+
+COPY tsconfig.json ./
+COPY src/ src/
+COPY types/ types/
 # Newer Deno doesn't require CWD read access
 # See: https://github.com/denoland/deno/commit/4e655e543f7053505586209689f824c1b2ce878c
 # XXX: the node_modules dir path could change in the future
