@@ -1,4 +1,4 @@
-FROM denoland/deno:alpine-2.6.7 AS build
+FROM denoland/deno:alpine-2.6.8 AS build
 USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
