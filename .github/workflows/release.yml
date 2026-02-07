@@ -175,7 +175,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: server/
-          file: server/Dockerfile.node
+          # file: server/Dockerfile.node
+          target: server_node
           platforms: "linux/amd64,linux/arm64"
           push: true
           tags: ${{ steps.node_meta.outputs.tags }}
@@ -186,7 +187,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: server/
-          file: server/Dockerfile.deno
+          # file: server/Dockerfile.deno
+          target: server_deno
           platforms: "linux/amd64,linux/arm64"
           push: true
           tags: ${{ steps.deno_meta.outputs.tags }}
