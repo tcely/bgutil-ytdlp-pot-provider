@@ -175,25 +175,27 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: server/
-          # file: server/Dockerfile.node
           target: server_node
           platforms: "linux/amd64,linux/arm64"
           push: true
           tags: ${{ steps.node_meta.outputs.tags }}
           labels: ${{ steps.node_meta.outputs.labels }}
           annotations: ${{ steps.node_meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push (deno)
         uses: docker/build-push-action@v6
         with:
           context: server/
-          # file: server/Dockerfile.deno
           target: server_deno
           platforms: "linux/amd64,linux/arm64"
           push: true
           tags: ${{ steps.deno_meta.outputs.tags }}
           labels: ${{ steps.deno_meta.outputs.labels }}
           annotations: ${{ steps.deno_meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Add official repository link to README.md
         run: |
