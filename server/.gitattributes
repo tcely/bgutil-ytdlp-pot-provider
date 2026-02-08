@@ -1,2 +1,2 @@
-deno.lock linguist-generated
-package-lock.json linguist-generated
+deno.lock linguist-generated -diff
+package-lock.json linguist-generated -diff
