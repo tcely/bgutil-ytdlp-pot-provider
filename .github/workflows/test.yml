@@ -113,8 +113,7 @@ jobs:
           # expect this to fail, but just make sure that the plugin is invoked
           {
             script_response=$(./yt-dlp ${{ env.TEST_ARGS }} --extractor-args \
-              "youtubepot-bgutilscript:server_home=server;\
-          prefer_deno=${{ matrix.jsrt == 'deno' }}" dQw4w9WgXcQ 2>&1)
+              "youtubepot-bgutilscript:server_home=server;" dQw4w9WgXcQ 2>&1)
             ret=$?
           } || true
 

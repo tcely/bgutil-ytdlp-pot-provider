@@ -86,24 +86,26 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _jsrt_vsn_tup(v: str):
         return tuple(int_or_none(x, default=0) for x in v.split('.'))
 
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        pref = cls._JSRT_PREF
+        register_preference(cls)(lambda provider, request: pref)
+
     _SCRIPT_BASENAME: str
     _JSRT_NAME: str  # Name of the JS Runtime shown in logs
     _JSRT_EXEC: str  # Name of the executable, and the name used in yt-dlp
     _JSRT_VSN_REGEX: str
     _JSRT_MIN_VER: tuple[int, ...]
+    _JSRT_PREF: int
 
     @abc.abstractmethod
     def _script_path_impl(self) -> str:
         raise NotImplementedError
 
-    def _jsrt_warn_unavail_impl(self) -> bool:
-        return False
-
     def _jsrt_args(self) -> Iterable[str]:
         return ()
 
     def _jsrt_path_impl(self) -> str | None:
-        report_jsrt_unavail = self.logger.warning if self._jsrt_warn_unavail else self.logger.debug
         jsrt_path = _determine_runtime_path(
             traverse_obj(self.ie.get_param('js_runtimes'), (self._JSRT_EXEC, 'path')),
             self._JSRT_EXEC)
@@ -113,18 +115,18 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 timeout=5.0)
         except subprocess.TimeoutExpired:
-            report_jsrt_unavail(
+            self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
                 'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds', once=True)
             return None
         except FileNotFoundError:
-            report_jsrt_unavail(
+            self.logger.debug(
                 f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is '
                 'installed and available in PATH or passed to yt-dlp with --js-runtimes.', once=True)
             return None
         mobj = re.search(self._JSRT_VSN_REGEX, stdout)
         if returncode or not mobj:
-            report_jsrt_unavail(
+            self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version. '
                 f'{self._JSRT_NAME} returned {returncode} exit status. '
                 f'Process stdout: {stdout}', once=True)
@@ -133,20 +135,15 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             return jsrt_path
 
     def _jsrt_has_support(self, v: str) -> bool:
-        report_jsrt_unavail = self.logger.warning if self._jsrt_warn_unavail else self.logger.debug
         if self._jsrt_vsn_tup(v) >= self._JSRT_MIN_VER:
             self.logger.trace(f'{self._JSRT_NAME} version: {v}')
             return True
         else:
             min_vsn_str = '.'.join(str(v_) for v_ in self._JSRT_MIN_VER)
-            report_jsrt_unavail(
+            self.logger.debug(
                 f'{self._JSRT_NAME} version too low. '
                 f'(got {v}, but at least {min_vsn_str} is required)', once=True)
             return False
-
-    @functools.cached_property
-    def _jsrt_warn_unavail(self) -> bool:
-        return self._jsrt_warn_unavail_impl()
 
     @functools.cached_property
     def _script_path(self) -> str:
@@ -159,8 +156,6 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_script = functools.cache(self._check_script_impl)
-        # TODO: document this
-        self._deno_preferred = self._base_config_arg('prefer_deno', 'false') != 'false'
 
     def _base_config_arg(self, key: str, default: T = None) -> str | T:
         return self.ie._configuration_arg(
@@ -288,18 +283,11 @@ class BgUtilScriptNodePTP(BgUtilScriptPTPBase):
     _JSRT_EXEC = 'node'
     _JSRT_VSN_REGEX = r'^v(\S+)'
     _JSRT_MIN_VER = (20, 0, 0)
-
-    def _jsrt_warn_unavail_impl(self) -> bool:
-        return not self._deno_preferred
+    _JSRT_PREF = 9
 
     def _script_path_impl(self) -> str:
         return os.path.join(
             self._server_home, 'build', self._SCRIPT_BASENAME)
-
-
-@register_preference(BgUtilScriptNodePTP)
-def bgutil_script_node_getpot_preference(provider: BgUtilScriptNodePTP, request):
-    return 1 if provider._deno_preferred else 10
 
 
 @register_provider
@@ -310,9 +298,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
     _JSRT_EXEC = 'deno'
     _JSRT_VSN_REGEX = r'^deno (\S+)'
     _JSRT_MIN_VER = (2, 0, 0)
-
-    def _jsrt_warn_unavail_impl(self) -> bool:
-        return self._deno_preferred
+    _JSRT_PREF = 10
 
     def _script_path_impl(self) -> str:
         return os.path.join(
@@ -330,14 +316,7 @@ class BgUtilScriptDenoPTP(BgUtilScriptPTPBase):
         )
 
 
-@register_preference(BgUtilScriptDenoPTP)
-def bgutil_script_deno_getpot_preference(provider: BgUtilScriptDenoPTP, request):
-    return 10 if provider._deno_preferred else 1
-
-
 __all__ = [
     BgUtilScriptNodePTP.__name__,
-    bgutil_script_node_getpot_preference.__name__,
     BgUtilScriptDenoPTP.__name__,
-    bgutil_script_deno_getpot_preference.__name__,
 ]

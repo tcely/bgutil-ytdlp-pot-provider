@@ -148,7 +148,7 @@ If both methods are available for use, the option (a) HTTP server method will be
 To check if the plugin was installed correctly, you should see the `bgutil` providers in yt-dlp's verbose output: `yt-dlp -v YOUTUBE_URL`.
 
 ```
-[debug] [youtube] [pot] PO Token Providers: bgutil:http-1.2.2 (external), bgutil:script-1.2.2 (external)
+[debug] [youtube] [pot] PO Token Providers: bgutil:http-1.2.2 (external), bgutil:script-node-1.2.2 (external), bgutil:script-deno-1.2.2 (external, unavailable)
 ```
 
 ### FAQ
