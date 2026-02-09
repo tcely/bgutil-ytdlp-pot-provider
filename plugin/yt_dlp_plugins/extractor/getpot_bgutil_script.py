@@ -117,7 +117,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         except subprocess.TimeoutExpired:
             self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
-                'did not finish in {int(self._GET_SERVER_VSN_TIMEOUT)} seconds', once=True)
+                'did not finish in 5.0 seconds', once=True)
             return None
         except FileNotFoundError:
             self.logger.debug(
