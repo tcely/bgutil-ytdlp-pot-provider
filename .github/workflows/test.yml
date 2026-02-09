@@ -31,7 +31,7 @@ jobs:
         run: autopep8 --diff plugin/
       - name: Install server dependencies
         if: always()
-        run: cd server && npm ci --no-audit && npm audit
+        run: cd server && npm ci --no-audit --no-fund && npm audit
       - name: Server lint check (ESlint)
         if: always()
         run: cd server && npx eslint --max-warnings=0 src/
@@ -70,9 +70,9 @@ jobs:
         run: |
           cd server
           if [ "${{ matrix.jsrt }}" = "deno" ]; then
-            deno install --frozen
+            deno install --allow-scripts=npm:canvas --frozen
           else
-            npm ci && npx tsc
+            npm ci --no-audit --no-fund && npx tsc
           fi
       - name: Install plugin
         run: |
@@ -209,13 +209,14 @@ jobs:
           }
           export -f ping
           print_logs() {
+            CURR_MATRIX="${{ matrix.jsrt }}, ${{ matrix.run }}"
             if [ "${{ matrix.run }}" = "native" ]; then
               [ -n "$SERVER_PID" ] && kill -9 "$SERVER_PID"
-              echo "::group::Logs from ${{ matrix.run }} HTTP server"
+              echo "::group::Logs from the HTTP server ($CURR_MATRIX)"
               cat server.log
             else
               docker stop bgutil-provider
-              echo "::group::Logs from ${{ matrix.run }} HTTP server"
+              echo "::group::Logs from the HTTP server ($CURR_MATRIX)"
               docker logs -t bgutil-provider
             fi
             echo "::endgroup::"
@@ -235,7 +236,7 @@ jobs:
                 )
                 ;;
               node)
-                npm ci && npx tsc
+                npm ci --no-audit --no-fund && npx tsc
                 node build/main.js --port "${{ env.PORT }}" > ../server.log 2>&1 &
                 SERVER_PID=$!
                 ;;

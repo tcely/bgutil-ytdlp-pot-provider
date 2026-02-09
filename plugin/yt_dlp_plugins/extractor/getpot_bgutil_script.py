@@ -112,8 +112,8 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         try:
             stdout, _, returncode = Popen.run(
                 [jsrt_path, '--version'], text=True,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                timeout=5.0)
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, timeout=5.0)
+            stdout = stdout.strip()
         except subprocess.TimeoutExpired:
             self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
@@ -129,7 +129,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version. '
                 f'{self._JSRT_NAME} returned {returncode} exit status. '
-                f'Process stdout: {stdout}', once=True)
+                f'Process stdout:\n{stdout}', once=True)
             return None
         if self._jsrt_has_support(mobj.group(1)):
             return jsrt_path
@@ -203,18 +203,19 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             return False
         if not self._jsrt_path:
             return False
-        stdout, stderr, returncode = Popen.run(
-            [self._jsrt_path, *self._jsrt_args(), script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            timeout=self._GET_SCRIPT_VSN_TIMEOUT)
+        stdout, _, returncode = Popen.run(
+            [self._jsrt_path, *self._jsrt_args(), script_path, '--version'],
+            stdout=subprocess.PIPE, text=True, timeout=self._GET_SCRIPT_VSN_TIMEOUT)
+        stdout = stdout.strip()
         if returncode:
             self.logger.warning(
                 f'Failed to check script version. '
                 f'Script returned {returncode} exit status. '
-                f'Script stdout: {stdout}; Script stderr: {stderr}',
+                f'Script stdout:\n{stdout}',
                 once=True)
             return False
         else:
-            self._check_version(stdout.strip(), name='script')
+            self._check_version(stdout, name='script')
             return True
 
     def _real_request_pot(
@@ -246,8 +247,10 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
 
         try:
             stdout, _, returncode = Popen.run(
-                command_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                command_args, stdout=subprocess.PIPE, text=True,
                 timeout=self._GETPOT_TIMEOUT)
+            stdout_lines = stdout.strip().splitlines()
+            json_resp = stdout_lines.pop()
         except subprocess.TimeoutExpired as e:
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})')
@@ -255,14 +258,13 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed: Unable to run script (caused by {e!r})') from e
 
-        if stdout_extra := stdout.strip().splitlines()[:-1]:
+        if stdout_extra := stdout_lines:
             self.logger.trace(f'script stdout:\n{stdout_extra}')
         if returncode:
             raise PoTokenProviderError(
                 f'_get_pot_via_script failed with returncode {returncode}')
 
         try:
-            json_resp = stdout.splitlines()[-1]
             self.logger.trace(f'JSON response:\n{json_resp}')
             # The JSON response is always the last line
             script_data_resp = json.loads(json_resp)
