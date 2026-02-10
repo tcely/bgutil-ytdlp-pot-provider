@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # check=error=true
-FROM node:25-slim AS install
+FROM node:25-bookworm-slim AS install
 USER node
 WORKDIR /app
 
@@ -44,7 +44,7 @@ run --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
 
-FROM gcr.io/distroless/cc AS server_deno
+FROM gcr.io/distroless/cc-debian12 AS server_deno
 USER nonroot
 WORKDIR /app
 
