@@ -112,4 +112,4 @@ COPY --chown=nonroot:nonroot src/ src/
 ##VOLUME ["/home/nonroot/.cache/deno"]
 
 EXPOSE 4416
-ENTRYPOINT ["/usr/bin/deno", "run", "--cache-only", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
+ENTRYPOINT ["/usr/bin/deno", "run", "--cached-only", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
