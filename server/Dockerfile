@@ -64,7 +64,7 @@ FROM debian:12-slim AS deno-install
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        busybox-static ca-certificates curl
+        ca-certificates curl unzip
 
 ARG GIT_BLOB_DENO_INSTALL='25c0b6035a1bfc7a72db2fb43d453c30ccfab522'
 ARG SHA256_DENO_INSTALL='0b66d046246a3079dea67bb41916a5a5fa55a41a286645bcdf2244cb598104d0'
