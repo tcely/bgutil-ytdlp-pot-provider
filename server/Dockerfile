@@ -24,19 +24,21 @@ FROM install AS server_node
 COPY --from=build_node /app/build /app/build
 
 EXPOSE 4416
-ENTRYPOINT ["node", "build/main.js"]
+ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
 FROM denoland/deno:alpine-2.6.8 AS build_deno
 USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
-COPY tsconfig.json package.json deno.lock ./
+COPY package.json deno.lock ./
 COPY src/ src/
+#COPY types/ types/
+#COPY tsconfig.json ./
 COPY --from=install /app/node_modules node_modules/
 
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
-    deno compile --output server --allow-env --allow-net --frozen --no-check \
+    deno compile --output server --frozen --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
@@ -45,7 +47,7 @@ FROM gcr.io/distroless/cc AS server_deno
 USER nonroot
 WORKDIR /app
 
-COPY --from=build_deno --chown=nonroot:nonroot /app/server ./
+COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
 
 EXPOSE 4416
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["/app/server"]
