@@ -60,6 +60,23 @@ RUN \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
 
+FROM debian:12-slim AS deno-install
+
+ARG GIT_BLOB_DENO_INSTALL='25c0b6035a1bfc7a72db2fb43d453c30ccfab522'
+ARG SHA256_DENO_INSTALL='0b66d046246a3079dea67bb41916a5a5fa55a41a286645bcdf2244cb598104d0'
+
+WORKDIR /usr/src/deno_install
+
+ADD "https://github.com/denoland/deno_install/blob/${GIT_BLOB_DENO_INSTALL}/install.sh" ./install.sh
+RUN printf > install.sh.sha256 -- \
+    '%s *install.sh\n' "${SHA256_DENO_INSTALL}" && \
+    sha256sum --strict -cw install.sh.sha256 && \
+    chmod -c 00755 install.sh
+
+WORKDIR /var/cache/deno
+
+RUN sh -x /usr/src/deno_install/install.sh
+
 FROM denoland/deno:bin AS deno-bin
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
