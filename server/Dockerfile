@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+# check=error=true
 FROM node:25-slim AS install
 USER node
 WORKDIR /app
