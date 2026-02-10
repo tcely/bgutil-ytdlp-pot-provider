@@ -6,27 +6,28 @@ COPY package.json package-lock.json ./
 RUN chown -v -R node:node /app 
 USER node
 
-RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
+##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
+RUN \
     npm ci --omit=dev --no-audit --no-fund && \
     npm audit fix && npm audit signatures
 
-FROM install AS build_node
+##FROM install AS build_node
 
-RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
-    npm ci --no-audit --no-fund && \
-    npm audit fix && npm audit signatures
+##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
+##    npm ci --no-audit --no-fund && \
+##    npm audit fix && npm audit signatures
 
-COPY tsconfig.json ./
-COPY src/ src/
-COPY types/ types/
-RUN npx tsc
+##COPY tsconfig.json ./
+##COPY src/ src/
+##COPY types/ types/
+##RUN npx tsc
 
-FROM install AS server_node
+##FROM install AS server_node
 
-COPY --from=build_node /app/build /app/build
+##COPY --from=build_node /app/build /app/build
 
-EXPOSE 4416
-ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
+##EXPOSE 4416
+##ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
 FROM denoland/deno:alpine-2.6.8 AS build_deno
 #USER deno
@@ -35,20 +36,21 @@ ENV DENO_DIR=/home/deno/.cache/deno
 
 COPY package.json deno.lock ./
 COPY src/ src/
-COPY types/ types/
-COPY tsconfig.json ./
+#COPY types/ types/
+#COPY tsconfig.json ./
 COPY --from=install /app/node_modules node_modules/
 
 RUN chown -v -R deno:deno /app
 USER deno
 
-RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
+##RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
+RUN \
     deno compile --output server --frozen --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
-    src/main.ts
+    --no-check src/main.ts
 
-FROM gcr.io/distroless/cc AS server_deno
+FROM gcr.io/distroless/cc-debian13:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
