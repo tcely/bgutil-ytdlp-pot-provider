@@ -89,6 +89,8 @@ FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
+COPY --chown=nonroot:nonroot types/ types/
+
 #COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
 #COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
 COPY --from=install /usr/sbin/ldconfig /usr/sbin/ldconfig
@@ -99,7 +101,8 @@ COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
 COPY --from=deno-bin /deno /usr/bin/deno
 COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
-COPY --chown=nonroot:nonroot types src package.json tsconfig.json deno.lock ./
+COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
+COPY --chown=nonroot:nonroot src/ src/
 
 EXPOSE 4416
 ENTRYPOINT ["/usr/bin/deno", "run", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
