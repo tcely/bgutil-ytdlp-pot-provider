@@ -110,12 +110,13 @@ COPY --from=deno-bin /deno /usr/bin/deno
 #ENV LD_LIBRARY_PATH='/app/canvas'
 
 COPY --chown=nonroot:nonroot types/ types/
+COPY --chown=nonroot:nonroot tsconfig.json ./
+COPY --from=install --chown=nonroot:nonroot /app/package-lock.json /app/package.json ./
 COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
-COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
 COPY --chown=nonroot:nonroot src/ src/
 
 RUN /usr/bin/deno cache /app/src/main.ts
 VOLUME ["/home/nonroot"]
 
 EXPOSE 4416
-ENTRYPOINT ["/usr/bin/deno", "run", "--node-modules-dir=auto", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=/app/node_modules", "--allow-read=/app", "/app/src/main.ts"]
+ENTRYPOINT ["/usr/bin/deno", "run", "--node-modules-dir=manual", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=/app/node_modules", "--allow-read=/app", "/app/src/main.ts"]
