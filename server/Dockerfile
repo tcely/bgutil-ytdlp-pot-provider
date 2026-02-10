@@ -34,8 +34,8 @@ ENV DENO_DIR=/home/deno/.cache/deno
 
 COPY package.json deno.lock ./
 COPY src/ src/
-#COPY types/ types/
-#COPY tsconfig.json ./
+COPY types/ types/
+COPY tsconfig.json ./
 COPY --from=install /app/node_modules node_modules/
 
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
