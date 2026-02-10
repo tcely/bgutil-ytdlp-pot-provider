@@ -1,9 +1,9 @@
 FROM node:25-slim AS install
 WORKDIR /app
-RUN chown -v node:node /app
-USER node
 
 COPY package.json package-lock.json ./
+RUN chown -v -R node:node /app 
+USER node
 
 RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
     npm ci --omit=dev --no-audit --no-fund && \
