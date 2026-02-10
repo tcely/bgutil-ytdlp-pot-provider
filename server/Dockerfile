@@ -67,7 +67,7 @@ ARG SHA256_DENO_INSTALL='0b66d046246a3079dea67bb41916a5a5fa55a41a286645bcdf2244c
 
 WORKDIR /usr/src/deno_install
 
-ADD "https://github.com/denoland/deno_install/blob/${GIT_BLOB_DENO_INSTALL}/install.sh" ./install.sh
+ADD "https://github.com/denoland/deno_install/raw/${GIT_BLOB_DENO_INSTALL}/install.sh" ./install.sh
 RUN printf > install.sh.sha256 -- \
     '%s *install.sh\n' "${SHA256_DENO_INSTALL}" && \
     sha256sum --strict -cw install.sh.sha256 && \
