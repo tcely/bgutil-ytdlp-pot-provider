@@ -103,13 +103,14 @@ COPY --from=install /usr/bin/ldd /usr/bin/ldd
 #ENV LD_LIBRARY_PATH='/app/canvas'
 
 COPY --from=deno-bin /deno /usr/bin/deno
-COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
+#COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
 COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
 COPY --chown=nonroot:nonroot src/ src/
 
-##SHELL ["/busybox/busybox", "sh", "-c"]
-##RUN /usr/bin/deno cache /app/src/main.ts
-##VOLUME ["/home/nonroot/.cache/deno"]
+SHELL ["/busybox/busybox", "sh", "-c"]
+RUN /usr/bin/deno cache /app/src/main.ts && \
+    /usr/bin/deno install --node-modules-dir=auto --frozen --allow-scripts npm:canvas npm:canvas
+VOLUME ["/home/nonroot/.cache/deno"]
 
 EXPOSE 4416
-ENTRYPOINT ["/usr/bin/deno", "run", "--cached-only", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
+ENTRYPOINT ["/usr/bin/deno", "run", "--node-modules-dir=auto", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
