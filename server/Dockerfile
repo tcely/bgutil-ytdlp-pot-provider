@@ -44,7 +44,7 @@ ENV DENO_DIR=/home/deno/.cache/deno
 #COPY tsconfig.json ./
 COPY package.json deno.lock ./
 COPY src/ src/
-COPY --from=install /app/node_modules node_modules/
+##COPY --from=install /app/node_modules node_modules/
 
 RUN chown -R deno:deno /app
 USER deno
@@ -54,23 +54,28 @@ RUN \
     printf > deno.json \
         '{"compilerOptions":{"useUnknownInCatchVariables": false}}\n' && \
     rm -f node_modules/canvas/build/Release/lib* && \
-    deno compile --frozen --output server \
+    : deno compile --frozen --output server \
     --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
 
+FROM denoland/deno:bin AS deno-bin
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
-COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
-COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
+#COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
+#COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
 COPY --from=install /usr/sbin/ldconfig /usr/sbin/ldconfig
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
-ENV LD_LIBRARY_PATH='/app/canvas'
+#ENV LD_LIBRARY_PATH='/app/canvas'
+
+COPY --from=deno-bin /deno /usr/bin/deno
+COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
+COPY --chown=nonroot:nonroot types src package.json tsconfig.json deno.lock ./
 
 EXPOSE 4416
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["/usr/bin/deno", "run", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
