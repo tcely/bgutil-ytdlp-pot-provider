@@ -64,6 +64,9 @@ USER nonroot
 WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
+COPY --from=install \
+    /app/node_modules/canvas/build/Release \
+    /app/node_modules/canvas/build/Release
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
