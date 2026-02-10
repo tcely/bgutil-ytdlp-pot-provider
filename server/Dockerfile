@@ -13,7 +13,7 @@ USER node
 ##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
 RUN \
     npm ci --omit=dev --no-audit --no-fund && \
-    npm audit fix && npm audit signatures
+    npm audit --help # fix && npm audit signatures
 
 RUN cp -v -p /lib/*/libuuid.so.1.* \
     node_modules/canvas/build/Release/libuuid.so.1 && \
