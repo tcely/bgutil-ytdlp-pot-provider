@@ -31,6 +31,7 @@ USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
+COPY types/ types/
 COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
 COPY --from=install /app/node_modules node_modules/
