@@ -66,6 +66,7 @@ WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
 COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
+COPY --from=install /usr/sbin/ldconfig /usr/sbin/ldconfig
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
