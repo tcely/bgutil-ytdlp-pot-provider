@@ -89,11 +89,12 @@ FROM scratch AS deno-bin
 COPY --from=deno-install /usr/bin/deno /deno
 
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
-USER nonroot
+#USER nonroot
 WORKDIR /app
 
 SHELL ["/busybox/busybox", "sh", "-c"]
 RUN chown -v -R nonroot:nonroot /app
+USER nonroot
 
 COPY --from=install /usr/sbin/ldconfig /usr/sbin/ldconfig
 COPY --from=install /bin/bash-static /bin/bash
