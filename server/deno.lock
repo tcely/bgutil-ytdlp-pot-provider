@@ -8,7 +8,7 @@
     "npm:@types/jsdom@27": "27.0.0",
     "npm:@types/node@^25.1.0": "25.1.0",
     "npm:@typescript-eslint/parser@^8.54.0": "8.54.0_eslint@9.39.2_typescript@5.9.3",
-    "npm:axios@^1.13.4": "1.13.4",
+    "npm:axios@^1.13.5": "1.13.5",
     "npm:bgutils-js@^3.2.0": "3.2.0",
     "npm:body-parser@^2.2.2": "2.2.2",
     "npm:canvas@^3.2.1": "3.2.1",
@@ -755,8 +755,8 @@
     "asynckit@0.4.0": {
       "integrity": "sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q=="
     },
-    "axios@1.13.4": {
-      "integrity": "sha512-1wVkUaAO6WyaYtCkcYCOx12ZgpGf9Zif+qXa4n+oYzK558YryKqiL6UWwd5DqiH3VRW0GYhTZQ/vlgJrCoNQlg==",
+    "axios@1.13.5": {
+      "integrity": "sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==",
       "dependencies": [
         "follow-redirects",
         "form-data",
@@ -2139,7 +2139,7 @@
         "npm:@types/jsdom@27",
         "npm:@types/node@^25.1.0",
         "npm:@typescript-eslint/parser@^8.54.0",
-        "npm:axios@^1.13.4",
+        "npm:axios@^1.13.5",
         "npm:bgutils-js@^3.2.0",
         "npm:body-parser@^2.2.2",
         "npm:canvas@^3.2.1",
