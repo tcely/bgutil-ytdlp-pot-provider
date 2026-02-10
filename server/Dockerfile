@@ -64,7 +64,8 @@ USER nonroot
 WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
-COPY --from=install /bin/bash-static /usr/sbin/bash
+COPY --from=install /bin/bash-static /bin/bash
+COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
 EXPOSE 4416
 ENTRYPOINT ["/app/server"]
