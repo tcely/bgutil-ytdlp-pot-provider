@@ -45,6 +45,8 @@ USER deno
 
 ##RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
 RUN \
+    printf > deno.json \
+        '{"compilerOptions":{"useUnknownInCatchVariables": false}}\n' && \
     deno compile --frozen --output server \
     --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
