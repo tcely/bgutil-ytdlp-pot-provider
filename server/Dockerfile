@@ -1,4 +1,5 @@
 FROM node:25-slim AS install
+RUN apt-get update && apt-get install -y bash-static
 #USER node
 WORKDIR /app
 
@@ -13,6 +14,8 @@ RUN \
 
 RUN cp -v -p /lib/*/libuuid.so.1.* \
     node_modules/canvas/build/Release/libuuid.so.1
+
+RUN ldd node_modules/canvas/build/Release/canvas.node
 
 ##FROM install AS build_node
 
@@ -56,11 +59,12 @@ RUN \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
 
+RUN ldd node_modules/canvas/build/Release/canvas.node
+
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
-COPY --from=install /usr/lib/*/libuuid.so.1.* /lib/*/libuuid.so.1
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
 
 EXPOSE 4416
