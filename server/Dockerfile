@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y bash-static
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN chown -v -R node:node /app 
+RUN chown -c -R node:node /app 
 USER node
 
 ##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
@@ -92,25 +92,28 @@ FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
-ENV DENO_USE_CGROUPS=1 DENO_NO_UPDATE_CHECK=1
+SHELL ["/busybox/busybox", "sh", "-c"]
+RUN chown -v -R nonroot:nonroot /app
 
-COPY --chown=root:root types/ types/
-
-#COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
-#COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
 COPY --from=install /usr/sbin/ldconfig /usr/sbin/ldconfig
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
+ENV DENO_USE_CGROUPS=1 DENO_NO_UPDATE_CHECK=1
+
+COPY --from=deno-bin /deno /usr/bin/deno
+
+#COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
+#COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
+
 #ENV LD_LIBRARY_PATH='/app/canvas'
 
-COPY --from=deno-bin --chown=root:root /deno /usr/bin/deno
-COPY --from=install --chown=root:root /app/node_modules /app/node_modules
-COPY --chown=root:root package.json tsconfig.json deno.lock ./
-COPY --chown=root:root src/ src/
+COPY --chown=nonroot:nonroot types/ types/
+COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
+COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
+COPY --chown=nonroot:nonroot src/ src/
 
-#SHELL ["/busybox/busybox", "sh", "-c"]
-#RUN /usr/bin/deno cache /app/src/main.ts
+RUN /usr/bin/deno cache /app/src/main.ts
 VOLUME ["/home/nonroot"]
 
 EXPOSE 4416
