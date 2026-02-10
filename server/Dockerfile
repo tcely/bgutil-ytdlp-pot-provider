@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# check=error=true
+
 FROM node:25-slim AS install
 RUN apt-get update && apt-get install -y bash-static
 #USER node
@@ -104,7 +107,9 @@ COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
 COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
 COPY --chown=nonroot:nonroot src/ src/
 
+SHELL ["/busybox/busybox", "sh", "-c"]
 RUN /usr/bin/deno cache /app/src/main.ts
+VOLUME ["/home/nonroot/.cache/deno"]
 
 EXPOSE 4416
 ENTRYPOINT ["/usr/bin/deno", "run", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
