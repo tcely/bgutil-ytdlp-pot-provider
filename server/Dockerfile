@@ -46,6 +46,7 @@ COPY package.json deno.lock ./
 COPY src/ src/
 COPY --from=install /app/node_modules node_modules/
 
+RUN mv -v node_modules/canvas/build/Release canvas
 RUN chown -R deno:deno /app
 USER deno
 
@@ -64,11 +65,11 @@ USER nonroot
 WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
-COPY --from=install \
-    /app/node_modules/canvas/build/Release \
-    /app/node_modules/canvas/build/Release
+COPY --from=build_deno /app/canvas/ /app/canvas/
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
+
+ENV LD_LIBRARY_PATH='/app/canvas'
 
 EXPOSE 4416
 ENTRYPOINT ["/app/server"]
