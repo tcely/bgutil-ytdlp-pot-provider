@@ -104,5 +104,7 @@ COPY --from=install --chown=nonroot:nonroot /app/node_modules /app/node_modules
 COPY --chown=nonroot:nonroot package.json tsconfig.json deno.lock ./
 COPY --chown=nonroot:nonroot src/ src/
 
+RUN /usr/bin/deno cache /app/src/main.ts
+
 EXPOSE 4416
-ENTRYPOINT ["/usr/bin/deno", "run", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
+ENTRYPOINT ["/usr/bin/deno", "run", "--frozen", "--allow-env", "--allow-net", "--allow-ffi=node_modules", "--allow-read=node_modules", "/app/src/main.ts"]
