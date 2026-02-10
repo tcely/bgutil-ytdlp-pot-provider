@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y bash-static
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN dpkg -L bash-static && chown -v -R node:node /app 
+RUN chown -v -R node:node /app 
 USER node
 
 ##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
@@ -59,13 +59,12 @@ RUN \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
 
-RUN ldd node_modules/canvas/build/Release/canvas.node
-
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
+COPY --from=install /bin/bash-static /usr/sbin/bash
 
 EXPOSE 4416
 ENTRYPOINT ["/app/server"]
