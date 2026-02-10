@@ -13,9 +13,9 @@ RUN \
     npm audit fix && npm audit signatures
 
 RUN cp -v -p /lib/*/libuuid.so.1.* \
-    node_modules/canvas/build/Release/libuuid.so.1
-
-RUN ldd node_modules/canvas/build/Release/canvas.node
+    node_modules/canvas/build/Release/libuuid.so.1 && \
+    chmod -c 00755 node_modules/canvas/build/Release/* && \
+    ldd node_modules/canvas/build/Release/canvas.node
 
 ##FROM install AS build_node
 
@@ -46,7 +46,6 @@ COPY package.json deno.lock ./
 COPY src/ src/
 COPY --from=install /app/node_modules node_modules/
 
-RUN mv -v node_modules/canvas/build/Release canvas
 RUN chown -R deno:deno /app
 USER deno
 
@@ -54,6 +53,7 @@ USER deno
 RUN \
     printf > deno.json \
         '{"compilerOptions":{"useUnknownInCatchVariables": false}}\n' && \
+    rm -f node_modules/canvas/build/Release/lib* && \
     deno compile --frozen --output server \
     --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
@@ -65,7 +65,7 @@ USER nonroot
 WORKDIR /app
 
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
-COPY --from=build_deno --chown=nonroot:nonroot /app/canvas/ /app/canvas/
+COPY --from=install --chown=nonroot:nonroot /app/node_modules/canvas/build/Release/ /app/canvas/
 COPY --from=install /bin/bash-static /bin/bash
 COPY --from=install /usr/bin/ldd /usr/bin/ldd
 
