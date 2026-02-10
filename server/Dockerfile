@@ -28,7 +28,7 @@ EXPOSE 4416
 ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
 FROM denoland/deno:alpine-2.6.8 AS build_deno
-USER deno
+#USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
@@ -37,6 +37,9 @@ COPY src/ src/
 COPY types/ types/
 COPY tsconfig.json ./
 COPY --from=install /app/node_modules node_modules/
+
+RUN chown -v -R deno:deno /app
+USER deno
 
 RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
     deno compile --output server --frozen --allow-env --allow-net \
