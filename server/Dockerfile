@@ -57,7 +57,7 @@ FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
 
-COPY --from=install /lib/*/libuuid.so.1.* /lib/*/libuuid.so.1
+COPY --from=install /usr/lib/*/libuuid.so.1.* /lib/*/libuuid.so.1
 COPY --from=build_deno --chown=nonroot:nonroot /app/server /app/server
 
 EXPOSE 4416
