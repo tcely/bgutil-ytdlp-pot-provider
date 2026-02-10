@@ -36,8 +36,8 @@ COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
 COPY --from=install /app/node_modules node_modules/
 
-RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
-    deno compile --output server --allow-env --allow-net --frozen --no-check \
+RuN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
+    deno compile --output server --allow-env --allow-net --frozen \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
     src/main.ts
