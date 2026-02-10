@@ -1,4 +1,5 @@
 FROM node:25-slim AS install
+RUN chown -v node:node /app
 USER node
 WORKDIR /app
 
