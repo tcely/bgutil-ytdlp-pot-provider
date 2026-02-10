@@ -13,7 +13,7 @@ FROM install AS build_node
 
 RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
     npm ci --no-audit --no-fund && \
-    npm audit && npm audit signatures
+    npm audit fix && npm audit signatures
 
 COPY tsconfig.json ./
 COPY src/ src/
