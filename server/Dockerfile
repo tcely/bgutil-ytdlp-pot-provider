@@ -1,7 +1,7 @@
 FROM node:25-slim AS install
+WORKDIR /app
 RUN chown -v node:node /app
 USER node
-WORKDIR /app
 
 COPY package.json package-lock.json ./
 
