@@ -11,6 +11,9 @@ RUN \
     npm ci --omit=dev --no-audit --no-fund && \
     npm audit fix && npm audit signatures
 
+RUN cp -v -p /lib/*/libuuid.so.1.* \
+    node_modules/canvas/build/Release/libuuid.so.1
+
 ##FROM install AS build_node
 
 ##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
