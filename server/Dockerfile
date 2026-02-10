@@ -1,4 +1,5 @@
 FROM node:25-slim AS install
+#USER node
 WORKDIR /app
 
 COPY package.json package-lock.json ./
