@@ -34,13 +34,13 @@ FROM denoland/deno:alpine-2.6.8 AS build_deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
-COPY types/ types/
+#COPY types/ types/
 COPY tsconfig.json ./
 COPY package.json deno.lock ./
 COPY src/ src/
 COPY --from=install /app/node_modules node_modules/
 
-RUN chown -v -R deno:deno /app
+RUN chown -R deno:deno /app
 USER deno
 
 ##RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
