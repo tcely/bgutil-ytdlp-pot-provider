@@ -78,9 +78,13 @@ RUN printf > install.sh.sha256 -- \
     chmod -c 00755 install.sh
 
 ENV DENO_INSTALL='/usr'
-RUN CI=true sh -x /usr/src/deno_install/install.sh
+RUN CI=true sh /usr/src/deno_install/install.sh && \
+    chown -c root:root /usr/bin/deno && \
+    stat /usr/bin/deno
 
-FROM denoland/deno:bin AS deno-bin
+FROM scratch AS deno-bin
+COPY --from=deno-install /usr/bin/deno /deno
+
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
 USER nonroot
 WORKDIR /app
