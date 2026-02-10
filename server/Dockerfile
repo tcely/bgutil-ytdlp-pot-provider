@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y bash-static
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN chown -v -R node:node /app 
+RUN dpkg -L bash-static && chown -v -R node:node /app 
 USER node
 
 ##RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
