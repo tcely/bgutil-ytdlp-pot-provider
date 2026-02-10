@@ -34,10 +34,10 @@ FROM denoland/deno:alpine-2.6.8 AS build_deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
 
+COPY types/ types/
+COPY tsconfig.json ./
 COPY package.json deno.lock ./
 COPY src/ src/
-#COPY types/ types/
-#COPY tsconfig.json ./
 COPY --from=install /app/node_modules node_modules/
 
 RUN chown -v -R deno:deno /app
@@ -45,10 +45,11 @@ USER deno
 
 ##RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
 RUN \
-    deno compile --output server --frozen --allow-env --allow-net \
+    deno compile --frozen --output server \
+    --allow-env --allow-net \
     --allow-ffi=/tmp/deno-compile-server/node_modules \
     --allow-read=/tmp/deno-compile-server/node_modules \
-    --no-check src/main.ts
+    src/main.ts
 
 FROM gcr.io/distroless/cc-debian13:debug AS server_deno
 USER nonroot
