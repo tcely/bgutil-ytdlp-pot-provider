@@ -77,9 +77,8 @@ RUN printf > install.sh.sha256 -- \
     sha256sum --strict -cw install.sh.sha256 && \
     chmod -c 00755 install.sh
 
-WORKDIR /var/cache/deno
-
-RUN sh -x /usr/src/deno_install/install.sh
+ENV DENO_INSTALL='/usr'
+RUN CI=true sh -x /usr/src/deno_install/install.sh
 
 FROM denoland/deno:bin AS deno-bin
 FROM gcr.io/distroless/cc-debian12:debug AS server_deno
