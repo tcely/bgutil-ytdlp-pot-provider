@@ -174,7 +174,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
         # default if no arg was passed
         default_home = resolve_path('~', 'bgutil-ytdlp-pot-provider', 'server')
         self.logger.debug(
-            f'No server_home or script_path passed, defaulting to {default_home}')
+            f'No server_home or script_path passed, defaulting to {default_home}', once=True)
         return default_home
 
     @functools.cached_property
@@ -194,7 +194,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
     def _check_script_impl(self, script_path) -> bool:
         if not os.path.isfile(script_path):
             self.logger.debug(
-                f"Script path doesn't exist: {script_path}")
+                f"Script path doesn't exist: {script_path}", once=True)
             return False
         if os.path.basename(script_path) != self._SCRIPT_BASENAME:
             self.logger.warning(
