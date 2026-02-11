@@ -110,10 +110,10 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             traverse_obj(self.ie.get_param('js_runtimes'), (self._JSRT_EXEC, 'path')),
             self._JSRT_EXEC)
         try:
-            stdout, _, returncode = Popen.run(
-                [jsrt_path, '--version'], text=True,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, timeout=5.0)
-            stdout = stdout.strip()
+            output, _, returncode = Popen.run(
+                [jsrt_path, '--version'], text=True, stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=5.0)
+            output = output.strip()
         except subprocess.TimeoutExpired:
             self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version: {self._JSRT_NAME} process '
@@ -124,12 +124,12 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
                 f'{self._JSRT_NAME} executable not found. Please ensure {self._JSRT_NAME} is '
                 'installed and available in PATH or passed to yt-dlp with --js-runtimes.', once=True)
             return None
-        mobj = re.search(self._JSRT_VSN_REGEX, stdout)
+        mobj = re.search(self._JSRT_VSN_REGEX, output)
         if returncode or not mobj:
             self.logger.debug(
                 f'Failed to check {self._JSRT_NAME} version. '
                 f'{self._JSRT_NAME} returned {returncode} exit status. '
-                f'Process stdout:\n{stdout}', once=True)
+                f'Process output:\n{output}', once=True)
             return None
         if self._jsrt_has_support(mobj.group(1)):
             return jsrt_path
