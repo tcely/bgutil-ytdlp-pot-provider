@@ -1,4 +1,4 @@
-# Frequently Asked Questions
+# Frequently Asked Questions {#faq}
 
 #### I'm getting errors during `npm install` on Termux
 
@@ -10,6 +10,9 @@ pkg install libvips xorgproto
 ```
 
 2. Create the shell function to adjust `~/.gyp/include.gypi` for us.
+<details open>
+  <summary>code for the shell function</summary>
+
 ```shell
 update_gyp_config() (
   set -eu
@@ -49,6 +52,8 @@ update_gyp_config() (
 
 ```
 
+</details>
+
 3. Call the newly created `update_gyp_config` function to actually adjust the `~/.gyp/include.gypi` file.
 ```shell
 update_gyp_config
@@ -62,6 +67,9 @@ python3
 ```
 
 2. Define the Python function to adjust the file.
+<details>
+  <summary>code for the python function</summary>
+
 ```py
 import ast, shutil, tempfile, subprocess
 from pathlib import Path
@@ -99,6 +107,8 @@ def update_gyp_config():
 
 ```
 
+</details>
+
 3. When you are ready, and there were no errors, call that function with:
 ```py
 update_gyp_config()
@@ -108,3 +118,5 @@ update_gyp_config()
 ```py
 exit()
 ```
+
+[↑ Back to Top](#faq)
