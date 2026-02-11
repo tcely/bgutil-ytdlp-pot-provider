@@ -26,7 +26,7 @@ FROM install AS server_node
 COPY --from=build_node /app/build /app/build
 
 EXPOSE 4416
-ENTRYPOINT ["node", "build/main.js"]
+ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
 FROM denoland/deno:alpine-2.6.8 AS build_deno
 USER deno
@@ -51,4 +51,4 @@ WORKDIR /app
 COPY --from=build_deno --chown=nonroot:nonroot /app/server ./
 
 EXPOSE 4416
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["/app/server"]
