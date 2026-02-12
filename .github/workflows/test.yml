@@ -17,6 +17,7 @@ env:
     --js-runtimes node
 
 permissions:
+  contents: read
   checks: write
 
 jobs:
