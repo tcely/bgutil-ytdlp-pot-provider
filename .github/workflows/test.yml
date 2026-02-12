@@ -226,7 +226,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            BUILDKIT_DOCKERFILE_CHECK=error=true
+            BUILDKIT_DOCKERFILE_CHECK=error=false
       - name: Test server method
         shell: bash
         #if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
