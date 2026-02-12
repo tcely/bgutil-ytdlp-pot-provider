@@ -167,7 +167,7 @@ jobs:
         with:
           # Ensures "server/Dockerfile" path mapping for GitHub diffs
           #context: "{{defaultContext}}:server"
-          context: .
+          context: server
           file: server/Dockerfile
           call: check
 
