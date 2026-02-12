@@ -151,9 +151,6 @@ jobs:
   docker-lint:
     name: Dockerfile Syntax Check
     runs-on: ubuntu-latest
-    env:
-      DOCKER_BUILD_CHECKS_ANNOTATIONS: 'true'
-      BUILDX_METADATA_WARNINGS: 'true'
     continue-on-error: false
     steps:
       - uses: actions/checkout@v6
@@ -162,8 +159,8 @@ jobs:
       - name: Validate Dockerfile
         uses: docker/build-push-action@v6
         with:
-          # Ensures "server/Dockerfile" path mapping for GitHub diffs
-          #context: "{{defaultContext}}:server"
+          ##context: "{{defaultContext}}:server"
+          # Use checkout and local paths to avoid the URL syntax
           context: server
           file: server/Dockerfile
           call: check
