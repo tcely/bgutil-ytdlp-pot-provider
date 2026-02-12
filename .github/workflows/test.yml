@@ -229,9 +229,8 @@ jobs:
           build-args: |
             BUILDKIT_DOCKERFILE_CHECK=error=true
       - name: Test server method
-        shell: bash
-        #if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
         timeout-minutes: 3
+        shell: bash
         run: |
           exit_code=0
           ping() {
