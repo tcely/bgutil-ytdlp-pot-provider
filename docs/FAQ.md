@@ -1,5 +1,31 @@
 # Frequently Asked Questions
 
+### Which clients are supported?
+
+This provider only provides PO tokens for WEB clients.
+For example: `web, mweb, web_remix.`
+
+The list from `yt-dlp` `2025.05.22` was:
+
+```py
+WEBPO_CLIENTS = (
+    'WEB',
+    'MWEB',
+    'TVHTML5',
+    'WEB_EMBEDDED_PLAYER',
+    'WEB_CREATOR',
+    'WEB_REMIX',
+    'TVHTML5_SIMPLY',
+    'TVHTML5_SIMPLY_EMBEDDED_PLAYER',
+)
+```
+
+See the most recent [full list](//github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/youtube/pot/utils.py) of WEB clients from `yt-dlp`.
+
+--------
+
+[↑ Back to Top](#frequently-asked-questions)
+
 ### I'm getting errors during `npm install` on Termux
 
 For provider versions >=1.2.0, you may have issues while installing the `canvas` dependency on Termux. The Termux environment is missing a `android_ndk_path` and two packages by default. Run the following commands to setup the dependencies correctly.
