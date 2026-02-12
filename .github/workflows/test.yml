@@ -16,6 +16,9 @@ env:
     --ignore-no-formats-error
     --js-runtimes node
 
+permissions:
+  checks: write
+
 jobs:
   lint-format:
     name: Lint and format check
@@ -189,7 +192,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Check Dockerfile
         uses: docker/build-push-action@v6
-        if: matrix.run == 'docker'
+        if: always() && matrix.run == 'docker'
         with:
           context: server/
           call: check
