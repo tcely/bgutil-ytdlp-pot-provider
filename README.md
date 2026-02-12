@@ -20,6 +20,12 @@ The system consists of two parts:
    - (b) A POT generation script, which provides command line options for the plugin to invoke (the script requires transpiling before the plugin uses it)
 2. **Provider plugin**: uses the POT plugin framework to retrieve data from the provider, allowing `yt-dlp` to simulate having passed the 'bot check'.
 
+## Supported Clients
+
+This provider only provides PO tokens for WEB clients.
+
+See the [FAQ](docs/FAQ.md#which-clients-are-supported) for additional information.
+
 ## Installation
 
 ### Base Requirements
