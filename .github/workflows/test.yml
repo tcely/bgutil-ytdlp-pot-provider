@@ -225,6 +225,8 @@ jobs:
           tags: brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_DOCKERFILE_CHECK=error=true
       - name: Test server method
         shell: bash
         if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
