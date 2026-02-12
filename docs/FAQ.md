@@ -1,6 +1,6 @@
-# Frequently Asked Questions {#faq}
+# Frequently Asked Questions
 
-#### I'm getting errors during `npm install` on Termux
+### I'm getting errors during `npm install` on Termux
 
 For provider versions >=1.2.0, you may have issues while installing the `canvas` dependency on Termux. The Termux environment is missing a `android_ndk_path` and two packages by default. Run the following commands to setup the dependencies correctly.
 
@@ -58,6 +58,8 @@ update_gyp_config() (
 ```shell
 update_gyp_config
 ```
+
+--------
 
 Alternatively, you can handle the modification with Python instead of using `sed` to perform text manipulation.
 
@@ -119,4 +121,39 @@ update_gyp_config()
 exit()
 ```
 
-[↑ Back to Top](#faq)
+--------
+
+[↑ Back to Top](#frequently-asked-questions)
+
+### The `npm` package `canvas` is not installed?
+
+When the `canvas` npm package was installed, it included `canvas.node` which itself also needs shared libraries.
+
+Often, the operating system will have all of the shared libraries that are needed.
+
+However, sometimes these can be is missing. When that happens you may see this message in the HTTP server logs:
+
+`Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package`
+
+You can find the path to that file with:
+```sh
+find node_modules -name canvas.node -print
+```
+
+Set a variable with the path to the file:
+```sh
+canvas_node_path='node_modules/canvas/build/Release/canvas.node'
+```
+
+After you have the path you can use:
+```sh
+ldd "${canvas_node_path}" | grep -F -e '=> not found'
+```
+
+The `ldd` command should show you where the system found the shared libraries required by `canvas.node`; and `grep` will only report any that were not found.
+
+When you know what is missing, you can add the shared library to your operating system or place it into the same directory where `canvas.node` was found.
+
+--------
+
+[↑ Back to Top](#frequently-asked-questions)
