@@ -16,10 +16,6 @@ env:
     --ignore-no-formats-error
     --js-runtimes node
 
-permissions:
-  contents: read
-  checks: write
-
 jobs:
   lint-format:
     name: Lint and format check
@@ -152,8 +148,32 @@ jobs:
 
           exit $exit_code
 
+  docker-lint:
+    name: Dockerfile Syntax Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write  # Allows posting annotations to the PR diff
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Dockerfile
+        uses: docker/build-push-action@v6
+        with:
+          # Ensures "server/Dockerfile" path mapping for GitHub diffs
+          #context: "{{defaultContext}}:server"
+          context: .
+          file: server/Dockerfile
+          call: check
+
   server-method:
     name: Test plugin (server method)
+    needs: [docker-lint]
+    # 'always()' ensures the job starts even if 'docker-lint' fails
+    # The native legs will run immediately, Docker legs wait for 'success'
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -191,18 +211,10 @@ jobs:
           node-version: "20" # minimum supported version
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Check Dockerfile
-        uses: docker/build-push-action@v6
-        if: always() && matrix.run == 'docker' && matrix.jsrt == 'deno'
-        with:
-          # Points the context to the subdir while preserving the repo structure for GitHub
-          #context: "{{defaultContext}}:server"
-          context: .
-          file: server/Dockerfile
-          call: check
+        if: (matrix.run == 'docker') && (needs.docker-lint.result == 'success')
       - name: Build Docker image
         uses: docker/build-push-action@v6
-        if: matrix.run == 'docker'
+        if: (matrix.run == 'docker') && (needs.docker-lint.result == 'success')
         with:
           context: server/
           target: server_${{ matrix.jsrt }}
