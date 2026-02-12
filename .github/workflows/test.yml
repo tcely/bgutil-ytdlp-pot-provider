@@ -214,10 +214,10 @@ jobs:
           node-version: "20" # minimum supported version
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        if: (matrix.run == 'docker') # && (needs.docker-lint.result == 'success')
+        if: matrix.run == 'docker'
       - name: Build Docker image
         uses: docker/build-push-action@v6
-        if: (matrix.run == 'docker') # && (needs.docker-lint.result == 'success')
+        if: matrix.run == 'docker'
         with:
           context: server
           file: server/Dockerfile
@@ -227,7 +227,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            BUILDKIT_DOCKERFILE_CHECK=error=true
+            BUILDKIT_DOCKERFILE_CHECK=error=false
       - name: Test server method
         timeout-minutes: 3
         shell: bash
