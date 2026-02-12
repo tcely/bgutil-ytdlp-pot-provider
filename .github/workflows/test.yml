@@ -223,8 +223,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Test server method
-        timeout-minutes: 3
         shell: bash
+        if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
+        timeout-minutes: 3
         run: |
           exit_code=0
           ping() {
