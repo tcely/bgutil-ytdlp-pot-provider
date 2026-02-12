@@ -214,10 +214,10 @@ jobs:
           node-version: "20" # minimum supported version
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        if: (matrix.run == 'docker') && (needs.docker-lint.result == 'success')
+        if: (matrix.run == 'docker') # && (needs.docker-lint.result == 'success')
       - name: Build Docker image
         uses: docker/build-push-action@v6
-        if: (matrix.run == 'docker') && (needs.docker-lint.result == 'success')
+        if: (matrix.run == 'docker') # && (needs.docker-lint.result == 'success')
         with:
           context: server/
           target: server_${{ matrix.jsrt }}
@@ -229,7 +229,7 @@ jobs:
             BUILDKIT_DOCKERFILE_CHECK=error=true
       - name: Test server method
         shell: bash
-        if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
+        #if: (matrix.run != 'docker') || (needs.docker-lint.result == 'success')
         timeout-minutes: 3
         run: |
           exit_code=0
