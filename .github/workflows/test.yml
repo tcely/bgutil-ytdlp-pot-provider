@@ -40,7 +40,7 @@ jobs:
         run: cd server && npx prettier --check 'src/**/*.{js,ts}'
       - name: Lint Dockerfile
         uses: docker/build-push-action@v6
-        if: akways()
+        if: always()
         env:
           DOCKER_BUILD_CHECKS_ANNOTATIONS: 1
         with:
