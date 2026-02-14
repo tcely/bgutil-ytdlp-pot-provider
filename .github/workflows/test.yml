@@ -45,7 +45,7 @@ jobs:
           context: server
           file: server/Dockerfile
           build-args: BUILDKIT_DOCKERFILE_CHECK=error=true
-      - name: Lint Dockerfile
+      - name: Generate warnings for Dockerfile
         uses: docker/build-push-action@v6
         if: failure()
         with:
