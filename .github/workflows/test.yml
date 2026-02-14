@@ -38,6 +38,15 @@ jobs:
       - name: Server format check (Prettier)
         if: always()
         run: cd server && npx prettier --check 'src/**/*.{js,ts}'
+      - name: Lint Dockerfile
+        uses: docker/build-push-action@v6
+        if: akways()
+        env:
+          DOCKER_BUILD_CHECKS_ANNOTATIONS: 1
+        with:
+          context: server
+          file: server/Dockerfile
+          build-args: BUILDKIT_DOCKERFILE_CHECK=error=true
 
   script-method:
     name: Test plugin (script method)
@@ -194,7 +203,6 @@ jobs:
         if: matrix.run == 'docker'
         with:
           context: server
-          file: server/Dockerfile
           target: server_${{ matrix.jsrt }}
           load: true
           tags: brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
