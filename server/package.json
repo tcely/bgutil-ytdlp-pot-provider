@@ -29,7 +29,7 @@
         "canvas": "^3.2.1",
         "commander": "^14.0.3",
         "express": "^5.2.1",
-        "jsdom": "^27.4.0",
+        "jsdom": "^28.0.0",
         "proxy-agent": "^6.5.0",
         "youtubei.js": "^16.0.1"
     },
@@ -39,8 +39,8 @@
         "@types/body-parser": "^1.19.6",
         "@types/express": "^5.0.6",
         "@types/jsdom": "^27.0.0",
-        "@types/node": "^25.1.0",
-        "@typescript-eslint/parser": "^8.54.0",
+        "@types/node": "^25.2.3",
+        "@typescript-eslint/parser": "^8.55.0",
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-only-warn": "^1.1.0",
@@ -48,6 +48,6 @@
         "prettier": "^3.8.1",
         "swc-node": "^1.0.0",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.54.0"
+        "typescript-eslint": "^8.55.0"
     }
 }
