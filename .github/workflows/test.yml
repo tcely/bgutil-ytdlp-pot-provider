@@ -41,12 +41,16 @@ jobs:
       - name: Lint Dockerfile
         uses: docker/build-push-action@v6
         if: always()
-        env:
-          DOCKER_BUILD_CHECKS_ANNOTATIONS: 1
         with:
           context: server
           file: server/Dockerfile
           build-args: BUILDKIT_DOCKERFILE_CHECK=error=true
+      - name: Lint Dockerfile
+        uses: docker/build-push-action@v6
+        if: failure()
+        with:
+          context: server
+          file: server/Dockerfile
 
   script-method:
     name: Test plugin (script method)
