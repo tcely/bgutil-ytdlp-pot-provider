@@ -21,7 +21,7 @@ jobs:
     name: Lint and format check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Ruff and autopep8
         run: pip install ruff autopep8
       - name: Python lint check (Ruff)
@@ -47,11 +47,12 @@ jobs:
         jsrt: [deno, node]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x" # keep in sync with yt-dlp's python requirement
       - name: Download yt-dlp
+        shell: bash
         run: |
           curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x ./yt-dlp
@@ -162,11 +163,12 @@ jobs:
       INTERVAL: 0.5
       TIMEOUT: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x" # keep in sync with yt-dlp's python requirement
       - name: Download yt-dlp
+        shell: bash
         run: |
           curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x ./yt-dlp
@@ -218,7 +220,7 @@ jobs:
             else
               docker stop bgutil-provider
               echo "::group::Logs from the HTTP server ($CURR_MATRIX)"
-              docker logs -t bgutil-provider
+              docker logs -t bgutil-provider 2>&1
             fi
             echo "::endgroup::"
           }
