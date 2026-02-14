@@ -192,6 +192,7 @@ jobs:
         if: matrix.run == 'docker'
         with:
           context: server/
+          file: server/Dockerfile
           target: server_${{ matrix.jsrt }}
           load: true
           tags: brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
