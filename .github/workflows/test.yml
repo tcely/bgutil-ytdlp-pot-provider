@@ -15,7 +15,6 @@ env:
     --extractor-args "youtube:player-client=web,web_music,mweb;pot_trace=true;fetch_pot=always"
     --ignore-no-formats-error
     --js-runtimes node
-  RUST_BACKTRACE: full
 
 jobs:
   lint-format:
@@ -193,7 +192,6 @@ jobs:
         if: matrix.run == 'docker'
         with:
           context: server/
-          file: server/Dockerfile
           target: server_${{ matrix.jsrt }}
           load: true
           tags: brainicism/bgutil-ytdlp-pot-provider:ci-${{ matrix.jsrt }}
