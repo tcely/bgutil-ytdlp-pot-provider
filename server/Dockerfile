@@ -38,4 +38,7 @@ COPY src/ src/
 RUN deno install --allow-scripts=npm:canvas
 
 EXPOSE 4416
-ENTRYPOINT ["/bin/deno", "run", "--allow-env", "--allow-net", "--allow-ffi=/app/node_modules", "--allow-read=/app/node_modules", "src/main.ts"]
+ENTRYPOINT [ \
+    "/bin/deno", "run", "--allow-env", "--allow-net", \
+    "--allow-ffi=/app/node_modules", "--allow-read=/app/node_modules", \
+    "src/main.ts"]
