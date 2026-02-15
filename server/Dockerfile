@@ -26,27 +26,16 @@ COPY --from=build_node /app/build /app/build
 EXPOSE 4416
 ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
-FROM denoland/deno:alpine-2.6.9 AS build_deno
+FROM denoland/deno:2.6.9 AS server_deno
 USER deno
 WORKDIR /app
-ENV DENO_DIR=/home/deno/.cache/deno
+ENV DENO_DIR=/app/.cache/deno
 
 COPY types/ types/
 COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
-COPY --from=install /app/node_modules node_modules/
 
-RUN --mount=type=cache,target=/home/deno/.cache/deno,uid=1000,gid=1000 \
-    deno compile --output server --allow-env --allow-net --frozen --no-check \
-    --allow-ffi=/tmp/deno-compile-server/node_modules \
-    --allow-read=/tmp/deno-compile-server/node_modules \
-    src/main.ts
-
-FROM gcr.io/distroless/cc-debian12 AS server_deno
-USER nonroot
-WORKDIR /app
-
-COPY --from=build_deno --chown=nonroot:nonroot /app/server ./
+RUN deno install --allow-scripts=npm:canvas
 
 EXPOSE 4416
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["/bin/deno", "run", "--allow-env", "--allow-net", "--allow-ffi=/app/node_modules", "--allow-read=/app/node_modules", "src/main.ts"]
