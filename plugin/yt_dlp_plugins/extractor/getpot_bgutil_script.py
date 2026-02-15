@@ -28,6 +28,7 @@ _FALLBACK_PATHEXT = ('.COM', '.EXE', '.BAT', '.CMD')
 
 
 # Copied from https://github.com/yt-dlp/yt-dlp/blob/891613b098b2b315d983c2ae16901f5de344ca56/yt_dlp/utils/_jsruntime.py#L16-L64
+# NOTE: keep in sync with upstream
 def _find_exe(basename: str) -> str:
     # Check in Python "scripts" path, e.g. for pipx-installed binaries
     binary = os.path.join(
