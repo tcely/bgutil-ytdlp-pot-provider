@@ -26,7 +26,7 @@ COPY --from=build_node /app/build /app/build
 EXPOSE 4416
 ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
-FROM denoland/deno:alpine-2.6.8 AS build_deno
+FROM denoland/deno:alpine-2.6.9 AS build_deno
 USER deno
 WORKDIR /app
 ENV DENO_DIR=/home/deno/.cache/deno
