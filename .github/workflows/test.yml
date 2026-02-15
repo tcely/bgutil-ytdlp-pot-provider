@@ -52,7 +52,6 @@ jobs:
         with:
           context: server
           file: server/Dockerfile
-          call: check
 
   script-method:
     name: Test plugin (script method)
