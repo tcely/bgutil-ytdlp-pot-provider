@@ -15,9 +15,8 @@ env:
     --extractor-args "youtube:player-client=web,web_music,mweb;pot_trace=true;fetch_pot=always"
     --ignore-no-formats-error
     --js-runtimes node
-  env:
-    DOCKER_BUILD_SUMMARY: false
-    DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+  DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   lint-format:
