@@ -10,13 +10,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
   TEST_ARGS: >-
     -vF --color always
     --extractor-args "youtube:player-client=web,web_music,mweb;pot_trace=true;fetch_pot=always"
     --ignore-no-formats-error
     --js-runtimes node
-  DOCKER_BUILD_SUMMARY: false
-  DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   lint-format:
@@ -51,6 +50,8 @@ jobs:
       - name: Generate warnings for Dockerfile
         uses: docker/build-push-action@v6
         if: failure()
+        env:
+          DOCKER_BUILD_SUMMARY: false
         with:
           context: server
           file: server/Dockerfile
