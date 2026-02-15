@@ -140,7 +140,7 @@ class BgUtilScriptPTPBase(BgUtilPTPBase, abc.ABC):
             self.logger.trace(f'{self._JSRT_NAME} version: {v}')
             return True
         else:
-            min_vsn_str = '.'.join(str(v_) for v_ in self._JSRT_MIN_VER)
+            min_vsn_str = '.'.join(map(str, self._JSRT_MIN_VER))
             self.logger.debug(
                 f'{self._JSRT_NAME} version too low. '
                 f'(got {v}, but at least {min_vsn_str} is required)', once=True)

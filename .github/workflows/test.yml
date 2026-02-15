@@ -15,6 +15,9 @@ env:
     --extractor-args "youtube:player-client=web,web_music,mweb;pot_trace=true;fetch_pot=always"
     --ignore-no-formats-error
     --js-runtimes node
+  env:
+    DOCKER_BUILD_SUMMARY: false
+    DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   lint-format:
@@ -52,6 +55,8 @@ jobs:
         with:
           context: server
           file: server/Dockerfile
+          cache-from: type=gha
+          build-args: BUILDKIT_DOCKERFILE_CHECK=error=false
 
   script-method:
     name: Test plugin (script method)
@@ -226,14 +231,15 @@ jobs:
           }
           export -f ping
           print_logs() {
-            CURR_MATRIX="${{ matrix.jsrt }}, ${{ matrix.run }}"
+            GROUP="::group::Logs from the HTTP server \
+          (${{ matrix.jsrt }}, ${{ matrix.run }})"
             if [ "${{ matrix.run }}" = "native" ]; then
               [ -n "$SERVER_PID" ] && kill -9 "$SERVER_PID"
-              echo "::group::Logs from the HTTP server ($CURR_MATRIX)"
+              echo "$GROUP"
               cat server.log
             else
               docker stop bgutil-provider
-              echo "::group::Logs from the HTTP server ($CURR_MATRIX)"
+              echo "$GROUP"
               docker logs -t bgutil-provider 2>&1
             fi
             echo "::endgroup::"

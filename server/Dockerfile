@@ -14,9 +14,9 @@ RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
     npm ci --no-audit --no-fund && \
     npm audit && npm audit signatures
 
+COPY types/ types/
 COPY tsconfig.json ./
 COPY src/ src/
-COPY types/ types/
 RUN npx tsc
 
 FROM install AS server_node
@@ -26,19 +26,21 @@ COPY --from=build_node /app/build /app/build
 EXPOSE 4416
 ENTRYPOINT ["/usr/local/bin/node", "build/main.js"]
 
-FROM denoland/deno:2.6.9 AS server_deno
+FROM denoland/deno:debian-2.6.9 AS server_deno
 USER deno
 WORKDIR /app
 ENV DENO_DIR=/app/.cache/deno
+ENV DENO_NO_PROMPT=1 DENO_NO_UPDATE_CHECK=1
 
 COPY types/ types/
 COPY tsconfig.json package.json deno.lock ./
 COPY src/ src/
+COPY --from=install --chown=deno:deno /app/node_modules node_modules/
 
-RUN deno install --allow-scripts=npm:canvas
+RUN deno cache --frozen src/main.ts
 
 EXPOSE 4416
 ENTRYPOINT [ \
-    "/bin/deno", "run", "--allow-env", "--allow-net", \
+    "/usr/bin/deno", "run", "--allow-env", "--allow-net", \
     "--allow-ffi=/app/node_modules", "--allow-read=/app/node_modules", \
-    "src/main.ts"]
+    "/app/src/main.ts"]
