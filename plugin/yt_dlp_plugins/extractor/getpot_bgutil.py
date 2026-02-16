@@ -36,8 +36,6 @@ class BgUtilPTPBase(PoTokenProvider, abc.ABC):
         PoTokenContext.SUBS,
     )
     _GETPOT_TIMEOUT = 20.0
-    _GET_SERVER_VSN_TIMEOUT = 5.0
-    _MIN_NODE_VSN = (18, 0, 0)
 
     def _info_and_raise(self, msg, raise_from=None):
         self.logger.info(msg)

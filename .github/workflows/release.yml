@@ -15,11 +15,11 @@ jobs:
     outputs:
       version: ${{ steps.set_variables.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -28,6 +28,7 @@ jobs:
 
       - name: Set variables
         id: set_variables
+        shell: bash
         run: |
           cp README.md plugin/
           cd plugin/
@@ -89,11 +90,11 @@ jobs:
     permissions:
       id-token: write # mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -103,6 +104,7 @@ jobs:
           pip install build hatchling
 
       - name: Build
+        shell: bash
         run: |
           printf '%s\n\n' \
             "Official repository: <${{ github.server_url }}/${{ github.repository }}>" > ./README.md.new
@@ -127,27 +129,40 @@ jobs:
     env:
       repository: ${{ github.repository }} # like `brainicism/bgutil-ytdlp-pot-provider`
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Docker meta
-        id: meta
+      - name: Docker meta (node)
+        id: node_meta
         uses: docker/metadata-action@v5
         with:
           context: git
           images: ${{ env.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=node,enable={{is_default_branch}}
             # mark as latest only if built on default branch of repository
-            type=raw,value=${{ needs.release.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=${{ needs.release.outputs.version }}-node,enable={{is_default_branch}}
             # add the new git tag only if built on default branch of repository
-            type=sha
-            type=ref,event=branch
-            type=ref,event=pr
+            type=sha,suffix=-node
+            type=ref,suffix=-node,event=branch
+
+      - name: Docker meta (deno)
+        id: deno_meta
+        uses: docker/metadata-action@v5
+        with:
+          context: git
+          images: ${{ env.repository }}
+          tags: |
+            type=raw,value=deno,enable={{is_default_branch}}
+            type=raw,value=${{ needs.release.outputs.version }}-deno,enable={{is_default_branch}}
+            # add the new git tag only if built on default branch of repository
+            type=sha,suffix=-deno
+            type=ref,suffix=-deno,event=branch
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -158,16 +173,31 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Build and push
+      - name: Build and push (node)
         uses: docker/build-push-action@v6
         with:
           context: server/
-          file: server/Dockerfile
+          target: server_node
           platforms: "linux/amd64,linux/arm64"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ${{ steps.node_meta.outputs.tags }}
+          labels: ${{ steps.node_meta.outputs.labels }}
+          annotations: ${{ steps.node_meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push (deno)
+        uses: docker/build-push-action@v6
+        with:
+          context: server/
+          target: server_deno
+          platforms: "linux/amd64,linux/arm64"
+          push: true
+          tags: ${{ steps.deno_meta.outputs.tags }}
+          labels: ${{ steps.deno_meta.outputs.labels }}
+          annotations: ${{ steps.deno_meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Add official repository link to README.md
         run: |
@@ -176,10 +206,10 @@ jobs:
           cat ./README.md >> ./README.md.new && mv -f ./README.md.new ./README.md
 
       - name: Update repo description
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ env.repository }}
-          short-description: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+          short-description: ${{ fromJSON(steps.node_meta.outputs.json).labels['org.opencontainers.image.description'] }}
           readme-filepath: README.md
