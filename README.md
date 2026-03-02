@@ -145,14 +145,8 @@ If changing the port or IP used for the provider server, pass it to `yt-dlp` via
 ```shell
 --extractor-args "youtubepot-bgutilhttp:base_url=http://127.0.0.1:8080"
 ```
-
-If the tokens are no longer working, passing `disable_innertube=1` to `yt-dlp` restores the legacy behaviour and _might_ help
-
-```shell
---extractor-args "youtubepot-bgutilhttp:base_url=http://127.0.0.1:8080;disable_innertube=1"
-```
-
-Note that when you pass multiple extractor arguments to one provider or extractor (in this case: `youtubepot-bgutilhttp`), they are to be separated by semicolons (`;`) as shown above. Multiple `--extractor-args` will **NOT** work for the same provider/extractor.
+Note that when you pass multiple extractor arguments to one provider or extractor (in this case: `youtubepot-bgutilhttp`), they are to be separated by semicolons (`;`).
+Multiple `--extractor-args` will **NOT** work for the same provider/extractor.
 
 ---
 
