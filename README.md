@@ -46,6 +46,10 @@ There are two options for the provider: an always running POT generation HTTP se
 You need to first install the repository unless you are using the Docker image for the HTTP server:
 
 ```shell
+# If you want to use the script method without specifying `script_path` extractor argument
+# on each yt-dlp invocation, clone/extract the source code into your home directory.
+# Replace `~` with `%USERPROFILE%` if using Windows
+cd ~
 # Replace 1.2.2 with the latest version or the one that matches the plugin
 git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
 cd bgutil-ytdlp-pot-provider/server/
