@@ -26,7 +26,7 @@ See the most recent [full list](//github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/ex
 
 [↑ Back to Top](#frequently-asked-questions)
 
-### I'm getting errors during `npm install` on Termux
+### I'm getting errors during `npm ci` or `npm install` on Termux
 
 For provider versions >=1.2.0, you may have issues while installing the `canvas` dependency on Termux. The Termux environment is missing a `android_ndk_path` and two packages by default. Run the following commands to setup the dependencies correctly.
 
