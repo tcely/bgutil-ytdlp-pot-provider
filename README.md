@@ -41,7 +41,7 @@ See the [FAQ](docs/FAQ.md#which-clients-are-supported) for additional informatio
 
 ### 1. Set up the provider
 
-There are two options for the provider; an always running POT generation HTTP server, and a POT generation script invoked when needed. The HTTP server option is simpler, faster, and comes with a prebuilt Docker image. **You only need to choose one option.**
+There are two options for the provider: an always running POT generation HTTP server, and a POT generation script invoked when needed. The HTTP server option is simpler, faster, and comes with a prebuilt Docker image. **You only need to choose one option.**
 
 You need to first install the repository unless you are using the Docker image for the HTTP server:
 
