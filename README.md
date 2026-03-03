@@ -17,7 +17,7 @@ The system consists of two parts:
 
 1. **Provider**: Two options -
    - (a) An HTTP server that generates the POT, and provides interfaces for the plugin to retrieve data from (easy setup + docker image provided)
-   - (b) A POT generation script, which provides command line options for the plugin to invoke (the script requires transpiling before the plugin uses it)
+   - (b) A POT generation script, which provides command line options for the plugin to invoke (the script requires transpiling before the plugin uses it via `node`)
 2. **Provider plugin**: uses the POT plugin framework to retrieve data from the provider, allowing `yt-dlp` to simulate having passed the 'bot check'.
 
 ## Supported Clients
