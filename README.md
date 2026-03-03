@@ -113,7 +113,7 @@ cd ~
 # Replace 1.2.2 with the latest version or the one that matches the plugin
 git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
 cd bgutil-ytdlp-pot-provider/server/
-npm install
+npm ci
 npx tsc
 ```
 
