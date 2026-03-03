@@ -3,7 +3,7 @@
 ### Which clients are supported?
 
 This provider only provides PO tokens for WEB clients.
-For example: `web, mweb, web_remix.`
+For example: `web`, `mweb`, `web_remix`.
 
 The list from `yt-dlp` `2025.05.22` was:
 
